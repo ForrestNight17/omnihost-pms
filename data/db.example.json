@@ -1,0 +1,25 @@
+{
+  "_info": "Bu dosya ornek yapiyi gostermektedir. Gercek veri db.json'da tutulur ve .gitignore ile haric tutulur.",
+  "_usage": "Projeyi ilk kez calistirinca node server.js otomatik olarak data/db.json'u seed verisiyle olusturur.",
+  "rooms": [],
+  "roomTypes": [],
+  "reservations": [],
+  "guests": [],
+  "folios": [],
+  "folioItems": [],
+  "payments": [],
+  "invoices": [],
+  "users": [],
+  "auditLog": [],
+  "kbsRecords": [],
+  "currencies": [],
+  "settings": {
+    "hotelName": "OmniHost PMS",
+    "baseCurrency": "TRY",
+    "kdvAccommodation": 10,
+    "kdvFnb": 10,
+    "kdvGeneral": 10,
+    "accommodationTaxRate": 2,
+    "currentDate": "auto"
+  }
+}

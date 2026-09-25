@@ -1,0 +1,16 @@
+{
+  "name": "royal-luxury-pms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Royal Luxury Hotel — Otel Yönetim Sistemi (PMS): Resepsiyon, Oda Temizliği, Rezervasyonlar, Aylık Takvim ve Channel Manager.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "author": "The Royal Luxury Hotel",
+  "license": "UNLICENSED"
+}

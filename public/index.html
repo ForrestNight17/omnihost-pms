@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniHost PMS</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Cpath d='M6 22h20l-2-11-5 5-3-7-3 7-5-5z' fill='%236366f1'/%3E%3Crect x='6' y='23.4' width='20' height='2' rx='1' fill='%236366f1'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <script>(function () { try { var t = localStorage.getItem('pms_theme'); if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {} })();</script>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Kenar çubuğu -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="30" height="30"><path d="M5 23h22l-2.2-12-5.5 5.5L16 8l-3.3 8.5L7.2 11z" fill="var(--gold)"/><rect x="5" y="24.5" width="22" height="2.2" rx="1" fill="var(--gold)"/></svg>
+        </div>
+        <div class="brand-text">
+          <strong>OmniHost</strong>
+          <span>PMS</span>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav" aria-label="Ana menü"></nav>
+
+      <div class="sidebar-foot">
+        <button class="btn btn-gold btn-block btn-sm" data-global="sync-all" id="syncAllBtn">
+          <span class="i-sync"></span> Tümünü Senkronize Et
+        </button>
+        <div class="sidebar-user">
+          <div class="avatar" id="userAvatar">–</div>
+          <div style="flex:1; min-width:0">
+            <strong id="userName">—</strong>
+            <span id="userRole">—</span>
+          </div>
+          <button class="icon-btn" id="logoutBtn" title="Çıkış Yap" aria-label="Çıkış" style="color:var(--gold-soft); font-size:1.2rem">⏻</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Ana alan -->
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn hide-desktop" id="menuToggle" aria-label="Menü">☰</button>
+        <div class="topbar-title" id="pageTitle">Gösterge Paneli</div>
+        <div class="topbar-right">
+          <button class="theme-toggle" id="themeToggle" title="Açık / Koyu tema" aria-label="Tema değiştir">☾</button>
+          <div class="today-chip" id="todayChip"></div>
+        </div>
+      </header>
+      <main class="content" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- Katmanlar -->
+  <div class="modal-root" id="modalRoot"></div>
+  <div class="toast-root" id="toastRoot"></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
