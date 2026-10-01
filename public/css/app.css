@@ -873,3 +873,18 @@ table.tbl td, table.tbl th { padding: 8px 12px; }
 .month-label { font-size: 1.05rem; font-weight: 700; color: var(--ink); min-width: 170px; text-align: center; }
 .res-totals { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; padding: 10px 16px; background: var(--ivory-dim); border-top: 1px solid var(--line); font-size: .9rem; }
 .res-totals b { font-variant-numeric: tabular-nums; }
+
+/* Raporlar modülü sekmeleri ve detay stilleri */
+.rep-nav { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.rep-nav button { padding: 9px 15px; border: 1px solid transparent; border-bottom: 2px solid transparent; background: none; font-size: .86rem; font-weight: 600; color: var(--muted); cursor: pointer; border-radius: 8px 8px 0 0; white-space: nowrap; transition: color .15s, background .15s, border-color .15s; display: inline-flex; align-items: center; gap: 6px; }
+.rep-nav button:hover { color: var(--ink); background: var(--ivory-dim); }
+.rep-nav button.active { color: var(--gold); border-bottom-color: var(--gold); background: var(--white); box-shadow: var(--shadow-sm); }
+.rep-profit { color: var(--ok); font-weight: 700; }
+.rep-loss { color: var(--danger); font-weight: 700; }
+.rep-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.rep-pill.green { background: var(--ok-bg); color: var(--ok); }
+.rep-pill.red { background: var(--danger-bg); color: var(--danger); }
+.rep-pill.yellow { background: var(--warn-bg); color: var(--warn); }
+.rep-pill.blue { background: var(--info-bg); color: var(--info); }
+.table-compact th, .table-compact td { padding: 8px 10px; font-size: .84rem; }
+
