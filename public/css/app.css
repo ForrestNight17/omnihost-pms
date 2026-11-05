@@ -1038,23 +1038,3 @@ table.tbl td, table.tbl th { padding: 8px 12px; }
     display: none;
   }
 }
-
-.deck-link-btn {
-  font-size: .82rem;
-  font-weight: 700;
-  color: var(--gold-ink);
-  background: var(--fill, var(--ivory-dim));
-  border: 1px solid var(--line);
-  padding: 6px 14px;
-  border-radius: 999px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: all .15s ease;
-}
-.deck-link-btn:hover {
-  background: var(--sidebar-active);
-  border-color: var(--gold);
-  color: var(--ink);
-}
