@@ -112,9 +112,9 @@ export async function render(container, ctx) {
         <tbody>
         ${list.map((r) => `
           <tr data-id="${r.id}" style="cursor:pointer">
-            <td class="t-code">${r.code}</td>
+            <td class="t-code">${escapeHtml(r.code)}</td>
             <td><div class="t-strong">${escapeHtml(r.guestName)} ${r.guestVip ? '<span class="badge b-gold" style="margin-left:4px">VIP</span>' : ''}</div><div class="muted" style="font-size:.76rem">${escapeHtml(r.nationality || '')}</div></td>
-            <td>${escapeHtml(r.roomTypeName)}${r.roomNumber ? ` · <b>${r.roomNumber}</b>` : ''}</td>
+            <td>${escapeHtml(r.roomTypeName)}${r.roomNumber ? ` · <b>${escapeHtml(r.roomNumber)}</b>` : ''}</td>
             <td>${fmtDateShort(r.checkIn)}</td>
             <td>${fmtDateShort(r.checkOut)}</td>
             <td>${r.nights}</td>
@@ -204,8 +204,8 @@ export function openDetailModal(ctx, r, onChange) {
       ${resBadge(r.status)}
     </div>
     <dl class="dl">
-      <dt>Rezervasyon</dt><dd class="t-code">${r.code}</dd>
-      <dt>Oda Tipi</dt><dd>${escapeHtml(r.roomTypeName)} ${r.roomNumber ? `· Oda <b>${r.roomNumber}</b>` : ''}</dd>
+      <dt>Rezervasyon</dt><dd class="t-code">${escapeHtml(r.code)}</dd>
+      <dt>Oda Tipi</dt><dd>${escapeHtml(r.roomTypeName)} ${r.roomNumber ? `· Oda <b>${escapeHtml(r.roomNumber)}</b>` : ''}</dd>
       <dt>Giriş → Çıkış</dt><dd>${fmtDate(r.checkIn)} → ${fmtDate(r.checkOut)} <span class="muted">(${r.nights} gece)</span></dd>
       <dt>Kişi</dt><dd>${r.adults} yetişkin${r.children ? `, ${r.children} çocuk` : ''}</dd>
       <dt>Kaynak</dt><dd>${sourceBadge(r)} ${r.channelName && r.source !== 'direct' ? '' : ''}</dd>
@@ -271,7 +271,7 @@ export function openReservationModal(ctx, { reservation = null, onSaved, default
 
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Vazgeç</button><button class="btn btn-gold" id="saveRes">${isEdit ? 'Güncelle' : 'Rezervasyon Oluştur'}</button>`;
-  const m = openModal({ title: isEdit ? `Rezervasyon Düzenle · ${reservation.code}` : 'Yeni Rezervasyon', body: form, footer: foot, wide: true });
+  const m = openModal({ title: isEdit ? `Rezervasyon Düzenle · ${escapeHtml(reservation.code)}` : 'Yeni Rezervasyon', body: form, footer: foot, wide: true });
 
   // Fiyat + müsaitlik (tarih bazlı rate/inventory motorundan)
   let manualRate = isEdit;
@@ -314,7 +314,7 @@ export function openReservationModal(ctx, { reservation = null, onSaved, default
       if (!rooms.length) { sel.innerHTML = '<option value="">Boş oda yok</option>'; return; }
       const want = (prev && rooms.some((r) => r.id === prev)) ? prev
         : ((isEdit && reservation.roomId && rooms.some((r) => r.id === reservation.roomId)) ? reservation.roomId : rooms[0].id);
-      sel.innerHTML = rooms.map((r) => `<option value="${r.id}" ${r.id === want ? 'selected' : ''}>${r.number}</option>`).join('');
+      sel.innerHTML = rooms.map((r) => `<option value="${escapeHtml(r.id)}" ${r.id === want ? 'selected' : ''}>${escapeHtml(r.number)}</option>`).join('');
     } catch { sel.innerHTML = '<option value="">Hata</option>'; }
   }
   form.ratePerNight.addEventListener('input', () => { manualRate = true; recalcTotal(); });
@@ -370,7 +370,7 @@ export async function openCheckinModal(ctx, reservation, onDone) {
   const others = available.filter((r) => r.typeId !== reservation.roomTypeId);
   if (!available.length) { toast('Uygun boş oda yok.', 'err'); return; }
 
-  const optsHtml = (arr) => arr.map((r) => `<option value="${r.id}">${r.number} · ${escapeHtml(r.typeName)}${r.housekeeping !== 'clean' ? ' (temizlik bekliyor)' : ''}</option>`).join('');
+  const optsHtml = (arr) => arr.map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.number)} · ${escapeHtml(r.typeName)}${r.housekeeping !== 'clean' ? ' (temizlik bekliyor)' : ''}</option>`).join('');
   const body = `
     <p class="muted" style="margin-top:0">${escapeHtml(reservation.guestName)} · ${escapeHtml(reservation.roomTypeName)} · ${fmtDate(reservation.checkIn)} → ${fmtDate(reservation.checkOut)}</p>
     <div class="field"><label>Oda Seçimi</label>
@@ -382,7 +382,7 @@ export async function openCheckinModal(ctx, reservation, onDone) {
     </div>`;
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Vazgeç</button><button class="btn btn-gold" id="doCheckin">Check-in Yap</button>`;
-  const m = openModal({ title: `Check-in · ${reservation.code}`, body, footer: foot });
+  const m = openModal({ title: `Check-in · ${escapeHtml(reservation.code)}`, body, footer: foot });
   foot.querySelector('#doCheckin').addEventListener('click', async () => {
     const roomId = m.el.querySelector('#roomPick').value;
     foot.querySelector('#doCheckin').disabled = true;

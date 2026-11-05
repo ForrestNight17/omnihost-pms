@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OmniHost PMS — Tanıtım Dosyası</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary:   #0f172a;
+    --accent:    #6366f1;
+    --accent2:   #06b6d4;
+    --success:   #10b981;
+    --warning:   #f59e0b;
+    --danger:    #ef4444;
+    --surface:   #f8fafc;
+    --border:    #e2e8f0;
+    --text:      #1e293b;
+    --muted:     #64748b;
+    --white:     #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--white);
+    color: var(--text);
+    font-size: 10.5pt;
+    line-height: 1.65;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%);
+  }
+  .cover-badge {
+    background: rgba(99,102,241,0.2);
+    border: 1px solid rgba(99,102,241,0.4);
+    color: #a5b4fc;
+    font-size: 9pt;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 32px;
+  }
+  .cover h1 {
+    font-size: 52pt;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -2px;
+    line-height: 1.0;
+    margin-bottom: 8px;
+  }
+  .cover h1 span { color: #6366f1; }
+  .cover .tagline {
+    font-size: 14pt;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-bottom: 48px;
+    letter-spacing: -0.3px;
+  }
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: linear-gradient(90deg, #6366f1, #06b6d4);
+    border-radius: 2px;
+    margin: 0 auto 48px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item .label {
+    font-size: 8pt;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .cover-meta-item .value {
+    font-size: 11pt;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 32px;
+    font-size: 8pt;
+    color: #475569;
+    letter-spacing: 1px;
+  }
+
+  /* ── CONTENT ── */
+  .page { padding: 60px 72px; max-width: 900px; margin: 0 auto; }
+
+  .section { margin-bottom: 52px; page-break-inside: avoid; }
+
+  /* Section headers */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #6366f1, #06b6d4);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 12px;
+    margin-top: 24px;
+  }
+  h3:first-child { margin-top: 0; }
+
+  p { margin-bottom: 12px; color: var(--text); }
+
+  /* Quote / Callout */
+  .quote {
+    background: linear-gradient(135deg, #f0f0ff, #f0fdfe);
+    border-left: 4px solid var(--accent);
+    padding: 20px 24px;
+    border-radius: 0 12px 12px 0;
+    margin: 20px 0;
+    font-style: italic;
+    font-size: 11pt;
+    color: #334155;
+  }
+  .quote strong { font-style: normal; color: var(--accent); }
+
+  /* Founder card */
+  .founder-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+  }
+  .founder-avatar {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #6366f1, #06b6d4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26pt;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+    letter-spacing: -1px;
+  }
+  .founder-info h3 { margin-top: 0; margin-bottom: 4px; font-size: 15pt; }
+  .founder-info .title { color: var(--muted); font-size: 10pt; margin-bottom: 12px; }
+  .founder-quote {
+    font-style: italic;
+    color: #475569;
+    font-size: 10pt;
+    border-left: 3px solid #6366f1;
+    padding-left: 14px;
+    line-height: 1.6;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 9.5pt;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th {
+    background: var(--primary);
+    color: var(--white);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 500; }
+
+  /* Feature grid */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    page-break-inside: avoid;
+  }
+  .feature-card .icon { font-size: 20px; margin-bottom: 8px; }
+  .feature-card h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+  .feature-card p { font-size: 9pt; color: var(--muted); margin: 0; }
+
+  /* Badges / Tags */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+  .badge-green  { background: #dcfce7; color: #166534; }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-yellow { background: #fef9c3; color: #854d0e; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+  /* OTA chips */
+  .ota-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .ota-chip {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 9pt;
+    font-weight: 600;
+    border: 1.5px solid;
+  }
+  .ota-chip.booking  { color: #003580; border-color: #003580; background: #eef2ff; }
+  .ota-chip.expedia  { color: #00355f; border-color: #00355f; background: #f0f9ff; }
+  .ota-chip.airbnb   { color: #ff5a5f; border-color: #ff5a5f; background: #fff1f2; }
+  .ota-chip.agoda    { color: #5c2d91; border-color: #5c2d91; background: #faf5ff; }
+  .ota-chip.hotels   { color: #d32f2f; border-color: #d32f2f; background: #fff5f5; }
+  .ota-chip.tatil    { color: #c2410c; border-color: #c2410c; background: #fff7ed; }
+  .ota-chip.otelz    { color: #0d7b6f; border-color: #0d7b6f; background: #f0fdf4; }
+  .ota-chip.trip     { color: #1d4ed8; border-color: #1d4ed8; background: #eff6ff; }
+
+  /* Arch diagram */
+  .arch-box {
+    background: #0f172a;
+    border-radius: 14px;
+    padding: 28px 32px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 8pt;
+    color: #94a3b8;
+    line-height: 1.7;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .arch-box .hl-green  { color: #34d399; }
+  .arch-box .hl-blue   { color: #60a5fa; }
+  .arch-box .hl-purple { color: #a78bfa; }
+  .arch-box .hl-yellow { color: #fbbf24; }
+
+  /* Roadmap */
+  .roadmap {
+    position: relative;
+    padding-left: 28px;
+  }
+  .roadmap::before {
+    content: '';
+    position: absolute;
+    left: 7px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: linear-gradient(to bottom, #6366f1, #06b6d4);
+  }
+  .roadmap-item {
+    position: relative;
+    margin-bottom: 24px;
+    page-break-inside: avoid;
+  }
+  .roadmap-item::before {
+    content: '';
+    position: absolute;
+    left: -25px; top: 6px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--white);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .roadmap-item.done::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+  .roadmap-item h4 {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+  .roadmap-item .phase-label {
+    font-size: 8pt;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .roadmap-item ul { padding-left: 16px; }
+  .roadmap-item li { font-size: 9.5pt; color: var(--muted); margin-bottom: 3px; }
+
+  /* Collab cards */
+  .collab-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .collab-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    page-break-inside: avoid;
+  }
+  .collab-card .need {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .collab-card .contribution { font-size: 9pt; color: var(--muted); }
+
+  /* Compliance */
+  .compliance-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .compliance-item:last-child { border-bottom: none; }
+  .compliance-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .compliance-dot.ok   { background: #dcfce7; color: #166534; }
+  .compliance-dot.gear { background: #fef9c3; color: #854d0e; }
+  .compliance-item .label { font-weight: 600; font-size: 10pt; color: var(--primary); }
+  .compliance-item .desc  { font-size: 9pt; color: var(--muted); }
+
+  /* Demo box */
+  .demo-box {
+    background: #0f172a;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 16px 0;
+  }
+  .demo-box pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9pt;
+    color: #e2e8f0;
+    line-height: 1.8;
+  }
+  .demo-box .cmd   { color: #fbbf24; }
+  .demo-box .url   { color: #34d399; }
+  .demo-box .cmt   { color: #475569; }
+
+  /* Contact */
+  .contact-card {
+    background: linear-gradient(135deg, #0f172a, #1e1b4b);
+    border-radius: 16px;
+    padding: 36px 40px;
+    text-align: center;
+    color: var(--white);
+  }
+  .contact-card h3 { color: var(--white); margin-bottom: 8px; font-size: 18pt; }
+  .contact-card .subtitle { color: #94a3b8; margin-bottom: 28px; font-size: 10.5pt; }
+  .contact-links { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .contact-link {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #e2e8f0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 9.5pt;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .contact-tagline {
+    margin-top: 28px;
+    color: #6366f1;
+    font-style: italic;
+    font-size: 10.5pt;
+  }
+  .footer-note { text-align: center; margin-top: 16px; font-size: 8pt; color: var(--muted); }
+
+  /* Print / PDF */
+  @media print {
+    .cover { page-break-after: always; }
+    .section { page-break-inside: avoid; }
+    .feature-card, .collab-card, .roadmap-item { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+  }
+  @page { margin: 0; size: A4; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ COVER ══════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Proje Tanıtım Dosyası · 2026</div>
+  <h1>Omni<span>Host</span> PMS</h1>
+  <p class="tagline">Akıllı Otel Yönetiminin Yeni Çağı</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span class="label">Kurucu</span>
+      <span class="value">Ali Musayev</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="label">Kategori</span>
+      <span class="value">B2B SaaS · HotelTech</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="label">Hedef Pazar</span>
+      <span class="value">Türkiye Konaklama</span>
+    </div>
+    <div class="cover-meta-item">
+      <span class="label">Aşama</span>
+      <span class="value">Çalışan Ürün</span>
+    </div>
+  </div>
+  <div class="cover-footer">Istanbul Kultur Universitesi — Tasarım Fabrikası · Ekim 2026</div>
+</div>
+
+<!-- ══════════════════════ CONTENT ══════════════════════ -->
+<div class="page">
+
+  <!-- KURUCU -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">👤</div>
+      <h2>Kurucu</h2>
+    </div>
+    <div class="founder-card">
+      <div class="founder-avatar">AM</div>
+      <div class="founder-info">
+        <h3>Ali Musayev</h3>
+        <p class="title">Yazılım Geliştirici &amp; Girişimci · Full-Stack · HotelTech</p>
+        <p class="founder-quote">
+          "Otel yazılımı piyasasındaki boşluğu tespit ettim: büyük sistemler pahalı ve karmaşık, küçük çözümler ise yetersiz.
+          OmniHost, bu ikisi arasındaki köprüyü kurdu — sıfır harici bağımlılıkla, Türkiye'ye tam uyumlu."
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- VİZYON & SORUN -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🎯</div>
+      <h2>Vizyon &amp; Sorun</h2>
+    </div>
+    <div class="quote">
+      Türkiye konaklama sektöründeki her ölçekteki tesisi — bağımsız butik otellerden zincir işletmelere —
+      <strong>dijital dönüşümde öncü hale getirmek.</strong>
+    </div>
+    <p>Türkiye'de yaklaşık <strong>12.000 turizm belgeli tesis</strong> bulunmaktadır. Bu tesislerin büyük çoğunluğu ya çok pahalı kurumsal yazılımlara bağımlıdır ya da yetersiz sistemlerle idare etmektedir.</p>
+
+    <table>
+      <thead><tr><th>Sorun</th><th>Pazar Gerçekliği</th></tr></thead>
+      <tbody>
+        <tr><td>Yüksek lisans maliyeti</td><td>Kurumsal PMS'ler yıllık $5.000–$50.000+ talep eder</td></tr>
+        <tr><td>Kurulum karmaşıklığı</td><td>3–6 ay implementasyon, pahalı danışmanlık</td></tr>
+        <tr><td>Türkiye uyumsuzluğu</td><td>Çoğu yabancı yazılım KBS, e-Fatura, Konaklama Vergisi'ni desteklemez</td></tr>
+        <tr><td>Vendor lock-in</td><td>OTA entegrasyonları için ayrıca Channel Manager ücreti</td></tr>
+        <tr><td>Veri egemenliği yok</td><td>Tüm veriler yurt dışı sunucularda — KVKK riski</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ÇÖZÜM -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">💡</div>
+      <h2>Çözüm: OmniHost PMS</h2>
+    </div>
+    <p><strong>OmniHost PMS</strong>, otel operasyonlarının tamamını tek çatı altında yöneten, Türkiye mevzuatına tam uyumlu, sıfır harici bağımlılıklı bir <strong>Otel Mülk Yönetim Sistemi + Kanal Yöneticisi'dir.</strong></p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">🚀</div>
+        <h4>30 Saniye Kurulum</h4>
+        <p><code>node server.js</code> komutuyla çalışır. Sunucu, yazılım, teknik ekip gerekmez.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📦</div>
+        <h4>Sıfır Bağımlılık</h4>
+        <p>Tüm sistem saf Node.js ile yazılmıştır. Paket riski, güvenlik açığı yok.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🇹🇷</div>
+        <h4>Türkiye'ye Özel</h4>
+        <p>KBS, e-Fatura/e-Arşiv, Konaklama Vergisi, TCMB döviz — hepsi yerleşik.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔗</div>
+        <h4>8 OTA Tek Panelden</h4>
+        <p>Booking.com, Expedia, Airbnb, Agoda ve daha fazlası — tek ekrandan senkron.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODÜLLER -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🏨</div>
+      <h2>Sistem Modülleri</h2>
+    </div>
+
+    <h3>Ön Büro</h3>
+    <table>
+      <thead><tr><th>Modül</th><th>Açıklama</th></tr></thead>
+      <tbody>
+        <tr><td>Canlı Dashboard</td><td>Anlık doluluk, ADR, RevPAR, günlük gelir, varış &amp; çıkış özeti</td></tr>
+        <tr><td>Resepsiyon Panosu</td><td>Görsel oda haritası (A/B blok + kat), check-in, check-out, walk-in</td></tr>
+        <tr><td>Rezervasyonlar</td><td>Fiyat bazlı müsaitlik kontrolü, tarihsel fiyatlandırma, durum yönetimi</td></tr>
+        <tr><td>Aylık Takvim</td><td>Grid görünümü + oda tipi Gantt şeridi</td></tr>
+        <tr><td>Kat Hizmetleri</td><td>Oda durum panosu — Temiz / Kirli / Arıza + Rezervasyon çakışma görünümü</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Gelir &amp; Dağıtım — OTA Entegrasyonları</h3>
+    <div class="ota-grid">
+      <span class="ota-chip booking">● Booking.com</span>
+      <span class="ota-chip expedia">● Expedia</span>
+      <span class="ota-chip airbnb">● Airbnb</span>
+      <span class="ota-chip agoda">● Agoda</span>
+      <span class="ota-chip hotels">● Hotels.com</span>
+      <span class="ota-chip tatil">● Tatilbudur</span>
+      <span class="ota-chip otelz">● Otelz</span>
+      <span class="ota-chip trip">● Trip.com</span>
+    </div>
+
+    <h3>Finans &amp; Yasal Uyum</h3>
+    <table>
+      <thead><tr><th>Modül</th><th>Açıklama</th></tr></thead>
+      <tbody>
+        <tr><td>Folio &amp; Fatura</td><td>Kayıt açma, ekstralar, çok yöntemli ödeme, kısmi tahsilat, ters kayıt</td></tr>
+        <tr><td>KDV Motoru</td><td>%10 konaklama / %20 genel KDV + %2 Konaklama Vergisi — otomatik</td></tr>
+        <tr><td>e-Fatura</td><td>e-Fatura/e-Arşiv adaptörü hazır (UBL-TR formatı)</td></tr>
+        <tr><td>KBS</td><td>EGM/Jandarma kimlik bildirimi — XML üretimi, TC/pasaport desteği</td></tr>
+        <tr><td>Gece Denetimi</td><td>Tarih ilerleme, no-show işleme, TCMB canlı döviz, günlük kapanış</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Türkiye Yasal Uyum Durumu</h3>
+    <div class="compliance-item">
+      <div class="compliance-dot ok">✓</div>
+      <div><div class="label">KDV %10 (Konaklama) / %20 (Genel)</div><div class="desc">Folyo/fatura motoru içinde yerleşik</div></div>
+    </div>
+    <div class="compliance-item">
+      <div class="compliance-dot ok">✓</div>
+      <div><div class="label">Konaklama Vergisi %2</div><div class="desc">Otomatik hesaplama, ayrı kalem olarak gösteriliyor</div></div>
+    </div>
+    <div class="compliance-item">
+      <div class="compliance-dot ok">✓</div>
+      <div><div class="label">TCMB Canlı Döviz Kurları</div><div class="desc">today.xml + yedek kaynak ile anlık çekim</div></div>
+    </div>
+    <div class="compliance-item">
+      <div class="compliance-dot gear">⚙</div>
+      <div><div class="label">e-Fatura / e-Arşiv (GİB)</div><div class="desc">Adaptör hazır — entegratör hesabı ile aktive edilir</div></div>
+    </div>
+    <div class="compliance-item">
+      <div class="compliance-dot gear">⚙</div>
+      <div><div class="label">KBS (EGM/Jandarma)</div><div class="desc">XML adaptörü hazır — tesis kimliği ile aktive edilir</div></div>
+    </div>
+  </div>
+
+  <!-- MİMARİ -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🏗️</div>
+      <h2>Teknik Mimari</h2>
+    </div>
+    <div class="arch-box">
+      <pre>
+<span class="hl-blue">┌────────────────────────────────────────────────────────────┐</span>
+<span class="hl-blue">│</span>                  <span class="hl-green">BROWSER  (Vanilla JS SPA)</span>                  <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>   13 Görünüm Modülü · Dark/Light Tema · Sıfır Framework   <span class="hl-blue">│</span>
+<span class="hl-blue">└──────────────────────────┬─────────────────────────────────┘</span>
+                           <span class="hl-yellow">│ REST API</span>
+<span class="hl-blue">┌──────────────────────────▼─────────────────────────────────┐</span>
+<span class="hl-blue">│</span>                   <span class="hl-green">NODE.JS SERVER</span>                            <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>   server.js → router.js → api.js + apiExtra.js            <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>                                                            <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>  <span class="hl-purple">billing</span>(folio)  <span class="hl-purple">pricing</span>(ARI)  <span class="hl-purple">auth</span>(scrypt)  <span class="hl-purple">channel</span>(mgr)  <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>                                                            <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>  <span class="hl-yellow">OTA Adaptörleri:</span> booking · expedia · airbnb · agoda      <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>                   hotelscom · tatilbudur · otelz · trip    <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>                                                            <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>  <span class="hl-yellow">Entegrasyonlar:</span>  e-Fatura (UBL-TR) · KBS · TCMB FX      <span class="hl-blue">│</span>
+<span class="hl-blue">└────────────────────────────────────────────────────────────┘</span>
+                           <span class="hl-yellow">│</span>
+<span class="hl-blue">┌──────────────────────────▼─────────────────────────────────┐</span>
+<span class="hl-blue">│</span>               <span class="hl-green">JSON File Database</span>                           <span class="hl-blue">│</span>
+<span class="hl-blue">│</span>          (PostgreSQL / SQLite yükseltme hazır)             <span class="hl-blue">│</span>
+<span class="hl-blue">└────────────────────────────────────────────────────────────┘</span>
+      </pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Teknoloji Seçimi</th><th>Gerekçe</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js 18+</td><td>Eşzamansız I/O, evrensel dağıtım, hafif ayak izi</td></tr>
+        <tr><td>Sıfır npm bağımlılığı</td><td>Güvenlik açığı riski sıfır, offline çalışır</td></tr>
+        <tr><td>Vanilla JS SPA</td><td>Framework bağımlılığı yok — 5 yıl sonra da çalışır</td></tr>
+        <tr><td>JSON DB</td><td>Anlık kurulum; PostgreSQL migrasyonu tek adım</td></tr>
+        <tr><td>scrypt hash</td><td>bcrypt'ten daha güçlü, timing-attack dirençli</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- YOL HARİTASI -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🗺️</div>
+      <h2>Yol Haritası</h2>
+    </div>
+    <div class="roadmap">
+      <div class="roadmap-item done">
+        <span class="phase-label">v1.0 — Tamamlandı · 2026</span>
+        <h4>Çalışan Ürün</h4>
+        <ul>
+          <li>62 odalı demo otel verisi ile tam işlevsel sistem</li>
+          <li>8 OTA adaptörü (Booking.com, Expedia, Airbnb…)</li>
+          <li>Türkiye yasal uyumu: KDV, KBS, e-Fatura, TCMB</li>
+          <li>4 kullanıcı rolü, audit log, finansal bütünlük</li>
+          <li>Gece denetimi ve kapsamlı raporlama</li>
+        </ul>
+      </div>
+      <div class="roadmap-item">
+        <span class="phase-label">v1.5 — Q1 2027</span>
+        <h4>Üretim Hazırlığı</h4>
+        <ul>
+          <li>PostgreSQL veritabanı geçişi</li>
+          <li>HTTPS terminasyonu + oturum güvenliği</li>
+          <li>Gerçek OTA API bağlantıları (canlı kimlik bilgileri)</li>
+          <li>Sanal POS entegrasyonu (iyzico / banka)</li>
+        </ul>
+      </div>
+      <div class="roadmap-item">
+        <span class="phase-label">v2.0 — Q3 2027</span>
+        <h4>Misafir Deneyimi &amp; Mobil</h4>
+        <ul>
+          <li>Misafir self-servis portali (online check-in/out)</li>
+          <li>Mobil uygulama — kat personeli için React Native</li>
+          <li>BI dashboard (trend tahminleme, veri analitiği)</li>
+          <li>SaaS model: çoklu tesis yönetimi</li>
+        </ul>
+      </div>
+      <div class="roadmap-item">
+        <span class="phase-label">v3.0 — 2028+</span>
+        <h4>Yapay Zeka &amp; Büyüme</h4>
+        <ul>
+          <li>AI tabanlı dinamik fiyat optimizasyonu</li>
+          <li>Yeşil turizm sertifika entegrasyonu</li>
+          <li>Bölgesel genişleme: Orta Asya Türk dili pazarları</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASARIM FABRİKASI -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🤝</div>
+      <h2>Tasarım Fabrikası ile İşbirliği</h2>
+    </div>
+    <p>OmniHost PMS, erken aşama bir teknoloji girişimi olarak Tasarım Fabrikası'nın sağlayacağı desteğe hazır, <strong>çalışan bir ürüne</strong> sahiptir.</p>
+    <div class="collab-grid">
+      <div class="collab-card">
+        <div class="need">🔬 Kullanıcı Araştırması</div>
+        <div class="contribution">Otel yöneticileri ile derinlemesine UX araştırması ve persona geliştirme</div>
+      </div>
+      <div class="collab-card">
+        <div class="need">🎨 UI/UX Tasarım</div>
+        <div class="contribution">Dashboard ve iş akışlarının kullanıcı odaklı yeniden tasarımı</div>
+      </div>
+      <div class="collab-card">
+        <div class="need">🧪 Prototip Testi</div>
+        <div class="contribution">Gerçek otel ortamında kullanılabilirlik testleri ve iterasyon</div>
+      </div>
+      <div class="collab-card">
+        <div class="need">📡 Mentörlük &amp; Ağ</div>
+        <div class="contribution">İş modeli, fiyatlandırma, go-to-market ve sektör bağlantıları</div>
+      </div>
+    </div>
+
+    <h3>Projenin Güçlü Yanları</h3>
+    <table>
+      <thead><tr><th></th><th>Kapasite</th></tr></thead>
+      <tbody>
+        <tr><td>✅ Çalışan ürün</td><td>Demo'da görülebilir, test edilebilir, gerçek verilerle çalışır</td></tr>
+        <tr><td>✅ Teknik olgunluk</td><td>Üretim seviyesi kod kalitesi, güvenlik, audit log</td></tr>
+        <tr><td>✅ Türkiye pazar bilgisi</td><td>Sektöre özgü mevzuat derinliği (KBS, e-Fatura, KDV)</td></tr>
+        <tr><td>✅ Kurucunun taahhüdü</td><td>Full-stack geliştirici + tam zamanlı odak</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DEMO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🚀</div>
+      <h2>Canlı Demo</h2>
+    </div>
+    <div class="demo-box">
+      <pre>
+<span class="cmt"># 30 saniyede deneyin</span>
+<span class="cmd">git clone</span> https://github.com/ForrestNight17/omnihost-pms.git
+<span class="cmd">cd</span> omnihost-pms
+<span class="cmd">node</span> server.js
+<span class="cmt">
+# Tarayıcıda açın →</span> <span class="url">http://localhost:4173</span>
+      </pre>
+    </div>
+    <table>
+      <thead><tr><th>Kullanıcı</th><th>Şifre</th><th>Rol &amp; Erişim</th></tr></thead>
+      <tbody>
+        <tr><td>admin</td><td>admin123</td><td>Tüm modüller</td></tr>
+        <tr><td>resepsiyon</td><td>resepsiyon123</td><td>Ön büro, rezervasyon, folio, fiyatlandırma, KBS</td></tr>
+        <tr><td>muhasebe</td><td>muhasebe123</td><td>Fatura, raporlar, gece denetimi</td></tr>
+        <tr><td>kat</td><td>kat123</td><td>Dashboard, oda kondisyonu</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- İLETİŞİM -->
+  <div class="section">
+    <div class="contact-card">
+      <h3>Ali Musayev</h3>
+      <p class="subtitle">Kurucu · OmniHost PMS · Yazılım Geliştirici &amp; Girişimci</p>
+      <div class="contact-links">
+        <span class="contact-link">🐙 github.com/ForrestNight17/omnihost-pms</span>
+        <span class="contact-link">📄 MIT © 2026 Ali Musayev</span>
+      </div>
+      <p class="contact-tagline">"Türkiye'nin konaklama sektörü, Türkiye'de üretilen yazılımı hak ediyor."</p>
+    </div>
+    <p class="footer-note">OmniHost PMS · İstanbul Kültür Üniversitesi Tasarım Fabrikası Başvurusu · Ekim 2026</p>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

@@ -15,34 +15,61 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORT = process.env.PORT || 4173;
 const HOST = process.env.HOST || '127.0.0.1';
 const NODE_ENV = process.env.NODE_ENV || 'production';
+const TRUST_PROXY = process.env.TRUST_PROXY === 'true';
 
 // Veritabanını yükle (ilk çalıştırmada seed üretir) ve üretim katmanını kur
 db.load();
 bootstrap();
 auth.cleanupSessions();
 
-// ---------- Brute-force koruması (bellek içi) ----------
-const loginAttempts = new Map(); // ip -> { count, resetAt }
-const MAX_ATTEMPTS = 10;
+// ---------- Brute-force koruması (IP + Kullanıcı Adı) ----------
+const loginAttempts = new Map(); // key -> { count, resetAt }
+const MAX_ATTEMPTS = 5; // 5 başarısız denemede kilitle
 const WINDOW_MS = 15 * 60 * 1000; // 15 dakika
 
-function checkBruteForce(ip) {
+function getClientIp(req) {
+  if (TRUST_PROXY && req.headers['x-forwarded-for']) {
+    return req.headers['x-forwarded-for'].split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || '127.0.0.1';
+}
+
+function checkBruteForce(key) {
   const now = Date.now();
-  const entry = loginAttempts.get(ip);
+  const entry = loginAttempts.get(key);
   if (!entry || now > entry.resetAt) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    loginAttempts.set(key, { count: 1, resetAt: now + WINDOW_MS });
     return { blocked: false };
   }
   entry.count++;
   if (entry.count > MAX_ATTEMPTS) return { blocked: true };
   return { blocked: false };
 }
-function resetBruteForce(ip) { loginAttempts.delete(ip); }
 
-// Temizlik: her 30 dakikada eski girişleri sil
+function recordFailedLogin(ip, username) {
+  checkBruteForce(`ip:${ip}`);
+  if (username) checkBruteForce(`user:${username.toLowerCase()}`);
+}
+
+function isLoginBlocked(ip, username) {
+  const ipEntry = loginAttempts.get(`ip:${ip}`);
+  if (ipEntry && ipEntry.count >= MAX_ATTEMPTS && Date.now() <= ipEntry.resetAt) return true;
+  if (username) {
+    const userEntry = loginAttempts.get(`user:${username.toLowerCase()}`);
+    if (userEntry && userEntry.count >= MAX_ATTEMPTS && Date.now() <= userEntry.resetAt) return true;
+  }
+  return false;
+}
+
+function resetBruteForce(ip, username) {
+  loginAttempts.delete(`ip:${ip}`);
+  if (username) loginAttempts.delete(`user:${username.toLowerCase()}`);
+}
+
+// Temizlik: her 30 dakikada süresi geçmiş girişleri sil
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, e] of loginAttempts) if (now > e.resetAt) loginAttempts.delete(ip);
+  for (const [k, e] of loginAttempts) if (now > e.resetAt) loginAttempts.delete(k);
 }, 30 * 60 * 1000);
 
 // Kimlik doğrulaması gerektirmeyen uç noktalar
@@ -53,15 +80,20 @@ const api = createApiRouter();
 const server = http.createServer(async (req, res) => {
   const parsed = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsed.pathname;
-  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
 
   // ---------- Güvenlik header'ları ----------
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-XSS-Protection', '0'); // Modern güvenli standart
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  // Yalnızca localhost'tan erişime izin ver (üretim için reverse-proxy arkasında değiştir)
+  // Content Security Policy (CSP)
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+  );
+  // Yalnızca aynı origin'e izin ver
   res.setHeader('Access-Control-Allow-Origin', `http://${HOST}:${PORT}`);
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Auth-Token');
@@ -79,10 +111,9 @@ const server = http.createServer(async (req, res) => {
     if (pathname.startsWith('/api/')) {
       req.query = Object.fromEntries(parsed.searchParams.entries());
 
-      // ---------- Brute-force: yalnızca login uç noktasında ----------
+      // ---------- Brute-force: login uç noktasında IP kontrolü ----------
       if (req.method === 'POST' && pathname === '/api/auth/login') {
-        const bf = checkBruteForce(clientIp);
-        if (bf.blocked) {
+        if (isLoginBlocked(clientIp)) {
           return sendError(res, 429, 'Çok fazla başarısız giriş denemesi. 15 dakika bekleyin.');
         }
       }
@@ -102,6 +133,8 @@ const server = http.createServer(async (req, res) => {
       if (matched) {
         req.params = matched.params;
         req._clientIp = clientIp;
+        req._isLoginBlocked = isLoginBlocked;
+        req._recordFailedLogin = recordFailedLogin;
         req._resetBruteForce = resetBruteForce;
         return await matched.handler(req, res);
       }
@@ -116,11 +149,12 @@ const server = http.createServer(async (req, res) => {
 
     sendError(res, 404, 'Bulunamadı.');
   } catch (err) {
-    console.error('[server] Hata:', err);
     if (!res.headersSent) {
-      // Üretimde iç hata detayını asla dışa sızdırma
-      const msg = NODE_ENV === 'development' ? err.message : 'Sunucu hatası. Lütfen tekrar deneyin.';
-      sendError(res, 500, msg);
+      const status = err.status || 500;
+      const msg = status < 500 ? err.message : (NODE_ENV === 'development' ? err.message : 'Sunucu hatası. Lütfen tekrar deneyin.');
+      sendError(res, status, msg);
+    } else {
+      console.error('[server] Hata (yanıt gönderildikten sonra):', err);
     }
   }
 });

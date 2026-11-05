@@ -26,7 +26,7 @@ export async function render(container, ctx) {
   const channelBars = (list) => {
     if (!list.length) return emptyState('📊', 'Bu dönemde kanal geliri yok.');
     const maxRev = Math.max(1, ...list.map((x) => x.revenue));
-    return list.map((x) => `<div class="bar-row"><div class="bl"><span class="sw" style="background:${channelColor(x.source)}"></span>${escapeHtml(x.name)}</div><div class="bar-track"><i style="width:${Math.max(3, Math.round((x.revenue / maxRev) * 100))}%"></i></div><div class="bv">${money(x.revenue)}</div></div>`).join('')
+    return list.map((x) => `<div class="bar-row"><div class="bl"><span class="sw" style="background:${escapeHtml(channelColor(x.source))}"></span>${escapeHtml(x.name)}</div><div class="bar-track"><i style="width:${Math.max(3, Math.round((x.revenue / maxRev) * 100))}%"></i></div><div class="bv">${money(x.revenue)}</div></div>`).join('')
       + `<div class="muted" style="font-size:.78rem;margin-top:12px">${PERIOD_LABEL[curPeriod]} · ${list.reduce((s, x) => s + x.count, 0)} rezervasyon · kaynağa göre gelir</div>`;
   };
 
@@ -108,7 +108,7 @@ export async function render(container, ctx) {
 function channelCard(c, resCount) {
   return `<div class="channel-card" data-ch="${c.id}">
     <div class="ch-top">
-      <div class="ch-logo" style="background:${c.color}">${escapeHtml(initials(c.name))}</div>
+      <div class="ch-logo" style="background:${escapeHtml(c.color)}">${escapeHtml(initials(c.name))}</div>
       <div style="flex:1;min-width:0">
         <div class="ch-name">${escapeHtml(c.name)}</div>
         <div class="ch-meta">Komisyon %${c.commission} · ${c.hasKey ? `🔑 ${escapeHtml(c.apiKeyMasked)}` : 'API anahtarı yok'}</div>
@@ -179,7 +179,7 @@ function openSyncModal(ctx, channel) {
       <button class="btn btn-ghost btn-block" data-kind="availability">⬆ Müsaitlik Gönder</button>
       <button class="btn btn-ghost btn-block" data-kind="rates">⬆ Fiyatları Gönder</button>
     </div>`;
-  const m = openModal({ title: `Senkronizasyon · ${channel.name}`, body, footer: '<button class="btn btn-ghost" data-close>Kapat</button>' });
+  const m = openModal({ title: `Senkronizasyon · ${escapeHtml(channel.name)}`, body, footer: '<button class="btn btn-ghost" data-close>Kapat</button>' });
   m.body.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-kind]'); if (!b) return;
     b.disabled = true; b.textContent = 'Senkronize ediliyor…';
@@ -205,7 +205,7 @@ function openChannelForm(ctx, channel = null) {
   const body = `
     <div class="form-row">
       <div class="field"><label>Kanal Adı</label><input class="input" id="cName" value="${channel ? escapeHtml(channel.name) : ''}" placeholder="Örn. Trip.com"></div>
-      <div class="field"><label>Renk</label><input class="input" id="cColor" type="color" value="${channel ? channel.color : '#0f1e3d'}" style="height:42px;padding:4px"></div>
+      <div class="field"><label>Renk</label><input class="input" id="cColor" type="color" value="${channel ? escapeHtml(channel.color) : '#0f1e3d'}" style="height:42px;padding:4px"></div>
     </div>
     <div class="field"><label>API Anahtarı</label>
       <input class="input" id="cKey" placeholder="${channel && channel.hasKey ? 'Değiştirmek için yeni anahtar girin' : 'API anahtarınızı yapıştırın'}" value="">
@@ -230,7 +230,7 @@ function openChannelForm(ctx, channel = null) {
     ${isEdit ? '<button class="btn btn-danger" id="delCh" style="margin-right:auto">Kanalı Kaldır</button>' : ''}
     <button class="btn btn-ghost" data-close>Vazgeç</button>
     <button class="btn btn-gold" id="saveCh">${isEdit ? 'Kaydet' : 'OTA Ekle'}</button>`;
-  const m = openModal({ title: isEdit ? `${channel.name} · Ayarlar` : 'Yeni OTA Kanalı', body, footer: foot, wide: true });
+  const m = openModal({ title: isEdit ? `${escapeHtml(channel.name)} · Ayarlar` : 'Yeni OTA Kanalı', body, footer: foot, wide: true });
 
   foot.querySelector('#saveCh').addEventListener('click', async () => {
     const name = m.el.querySelector('#cName').value.trim();
@@ -255,7 +255,7 @@ function openChannelForm(ctx, channel = null) {
 
   if (isEdit) {
     foot.querySelector('#delCh').addEventListener('click', async () => {
-      const ok = await confirmDialog({ title: 'Kanalı Kaldır', message: `${channel.name} kanalını kaldırmak istiyor musunuz?`, confirmText: 'Kaldır', danger: true });
+      const ok = await confirmDialog({ title: 'Kanalı Kaldır', message: `${escapeHtml(channel.name)} kanalını kaldırmak istiyor musunuz?`, confirmText: 'Kaldır', danger: true });
       if (!ok) return;
       try { await api.del(`/api/channels/${channel.id}`); toast('Kanal kaldırıldı.', 'warn'); m.close(); await store.refreshChannels(); ctx.reload(); }
       catch (e) { toast(e.message, 'err'); }

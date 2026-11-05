@@ -193,7 +193,7 @@ function showLogin(message) {
         <button type="button" data-u="admin" data-p="admin123">Yönetici</button>
         <button type="button" data-u="resepsiyon" data-p="resepsiyon123">Resepsiyon</button>
         <button type="button" data-u="muhasebe" data-p="muhasebe123">Muhasebe</button>
-        <button type="button" data-u="kat" data-p="kat123">Kat Hizmetleri</button>
+        <button type="button" data-u="kat" data-p="kat12345">Kat Hizmetleri</button>
       </div>
     </form>`;
   const form = el.querySelector('#loginForm');

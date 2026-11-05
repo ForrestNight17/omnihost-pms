@@ -198,7 +198,7 @@ function rrRow(room, bDate) {
   const tag = room.outOfOrder ? ' <span class="rr-tag rr-tag-ooo">Arızalı</span>'
     : (!room.occupied && room.housekeeping === 'dirty' ? ' <span class="rr-tag rr-tag-dirty">Kirli</span>' : '');
   return `<tr class="room-row ${rowClass(room, bDate)}" data-room="${room.id}">
-    <td class="t-strong">${room.number}${tag}</td>
+    <td class="t-strong">${escapeHtml(room.number)}${tag}</td>
     <td>${escapeHtml(room.typeName)}</td>
     <td>${has ? escapeHtml(room.guestName || '—') : ''}</td>
     <td>${has && room.checkIn ? fmtDateShort(room.checkIn) : ''}</td>
@@ -223,7 +223,7 @@ async function openRoomModal(ctx, room) {
         <div class="section-sep"></div>
         <dl class="dl">
           <dt>Misafir</dt><dd class="t-strong">${escapeHtml(reservation.guestName)} ${reservation.guestVip ? '<span class="badge b-gold">VIP</span>' : ''}</dd>
-          <dt>Rezervasyon</dt><dd class="t-code">${reservation.code}</dd>
+          <dt>Rezervasyon</dt><dd class="t-code">${escapeHtml(reservation.code)}</dd>
           <dt>Konaklama</dt><dd>${fmtDate(reservation.checkIn)} → ${fmtDate(reservation.checkOut)} (${reservation.nights} gece)</dd>
           <dt>Bakiye</dt><dd>${money(reservation.totalAmount - reservation.paidAmount)} kalan</dd>
         </dl>`;
@@ -235,7 +235,7 @@ async function openRoomModal(ctx, room) {
 
   const body = `
     <div class="flex between wrap">
-      <div><div style="font-family:var(--serif);font-size:1.8rem;color:var(--ink)">Oda ${room.number}</div>
+      <div><div style="font-family:var(--serif);font-size:1.8rem;color:var(--ink)">Oda ${escapeHtml(room.number)}</div>
         <div class="muted">${escapeHtml(room.typeName)} · ${room.floor}. kat · ${room.capacity} kişilik</div></div>
       <div class="flex gap-sm wrap" style="justify-content:flex-end;max-width:220px">
         ${occupied ? badge('Rezerve', 'b-navy') : badge('Boş', 'b-ok')}
@@ -258,7 +258,7 @@ async function openRoomModal(ctx, room) {
   else actions.push('<button class="btn btn-danger" data-do="oo">Arızalı İşaretle</button>');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Kapat</button>${actions.join('')}`;
 
-  const m = openModal({ title: `Oda ${room.number}`, body, footer: foot });
+  const m = openModal({ title: `Oda ${escapeHtml(room.number)}`, body, footer: foot });
   foot.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-do]'); if (!b) return;
     const act = b.dataset.do;

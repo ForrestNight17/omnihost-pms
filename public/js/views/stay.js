@@ -78,7 +78,7 @@ export async function openStayModal(ctx, opts = {}) {
     const roomNo = st.room ? st.room.number : '—';
     const typeName = st.room ? (st.room.typeName || store.roomTypeName(st.room.typeId)) : '';
     const h3 = m.el.querySelector('.modal-head h3');
-    if (h3) h3.textContent = `Konaklama · Oda ${roomNo} · ${typeName}${st.reservation ? ' · ' + st.reservation.code : ''}`;
+    if (h3) h3.textContent = `Konaklama · Oda ${escapeHtml(roomNo)} · ${escapeHtml(typeName)}${st.reservation ? ' · ' + escapeHtml(st.reservation.code) : ''}`;
     m.body.innerHTML = `
       <div class="stay-tabs" id="stayTabs">
         <button data-tab="guest" class="${st.tab === 'guest' ? 'active' : ''}">Giriş / Misafir Bilgileri</button>
@@ -103,7 +103,7 @@ export async function openStayModal(ctx, opts = {}) {
           <label>Oda No</label>
           ${st.mode === 'checkin'
             ? `<select class="select" id="fRoomSel">${(st.availableRooms || []).length ? (st.availableRooms || []).map((r) => `<option value="${r.id}" ${st.room && st.room.id === r.id ? 'selected' : ''}>${r.number} · ${escapeHtml(r.typeName)}${r.typeId === st.roomTypeId ? '' : ' (farklı tip)'}</option>`).join('') : '<option value="">Boş oda yok</option>'}</select>`
-            : `<input class="input" value="${st.room ? st.room.number : ''}" disabled>`}
+            : `<input class="input" value="${st.room ? escapeHtml(st.room.number) : ''}" disabled>`}
         </div>
         <div class="sf-row">
           <label>Gece Sayısı</label><input class="input" value="${n}" disabled>
@@ -176,7 +176,7 @@ export async function openStayModal(ctx, opts = {}) {
           <div class="stay-section-title"><span>Konaklama Fiyatları</span></div>
           <div class="table-wrap"><table class="tbl">
             <thead><tr><th>Tarih</th><th>Oda</th><th>Ürün / Hizmet</th><th class="t-right">Tutar</th></tr></thead>
-            <tbody>${roomItems.map((i) => `<tr><td class="muted">${fmtDateShort(i.date)}</td><td>${st.room ? st.room.number : ''}</td><td>${escapeHtml(i.description)}</td><td class="t-right t-strong">${money(i.gross)}</td></tr>`).join('')}</tbody>
+            <tbody>${roomItems.map((i) => `<tr><td class="muted">${fmtDateShort(i.date)}</td><td>${st.room ? escapeHtml(st.room.number) : ''}</td><td>${escapeHtml(i.description)}</td><td class="t-right t-strong">${money(i.gross)}</td></tr>`).join('')}</tbody>
           </table></div>
 
           <div class="stay-section-title" style="margin-top:14px"><span>Ödemeler</span>
@@ -344,7 +344,7 @@ export async function openStayModal(ctx, opts = {}) {
     let logs = [];
     try { logs = await api.get(`/api/rooms/${st.room.id}/logs`); } catch { /* */ }
     openModal({
-      title: `Oda ${st.room.number} · İşlem Geçmişi`,
+      title: `Oda ${escapeHtml(st.room.number)} · İşlem Geçmişi`,
       body: logs.length ? `<div class="room-log">${logs.map((l) => `<div class="rlog-item"><span class="rlog-ico rlog-neutral">•</span><div class="rlog-body"><div class="rlog-top"><b>${escapeHtml(l.detail || l.action)}</b><span class="rlog-time">${relTime(l.timestamp)}</span></div><div class="rlog-user">${escapeHtml(l.userName || 'sistem')}</div></div></div>`).join('')}</div>` : '<p class="muted">Kayıt yok.</p>',
       footer: '<button class="btn btn-ghost" data-close>Kapat</button>',
     });
@@ -367,7 +367,7 @@ export async function openStayModal(ctx, opts = {}) {
     const s = store; const set = {};
     const rows = f.items.map((i) => `<tr><td>${fmtDateShort(i.date)}</td><td>${escapeHtml(i.description)}</td><td style="text-align:right">${money(i.gross)}</td></tr>`).join('');
     const html = `<html><head><title>Folyo ${st.reservation.code}</title><style>body{font-family:Arial;padding:24px;color:#111}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{border-bottom:1px solid #ddd;padding:6px;font-size:13px;text-align:left}.tot{font-weight:bold}</style></head><body>
-      <h2>The Royal Luxury Hotel — Folyo</h2><div>${st.reservation.code} · Oda ${st.room.number} · ${escapeHtml(g.name || '')}</div>
+      <h2>The Royal Luxury Hotel — Folyo</h2><div>${escapeHtml(st.reservation.code)} · Oda ${escapeHtml(st.room.number)} · ${escapeHtml(g.name || '')}</div>
       <div>${fmtDate(st.checkIn)} → ${fmtDate(st.checkOut)} · ${st.reservation.nights} gece</div>
       <table><thead><tr><th>Tarih</th><th>Açıklama</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${rows}</tbody></table>
       <table><tr class="tot"><td>Toplam</td><td style="text-align:right">${money(f.chargeTotal)}</td></tr><tr><td>Ödenen</td><td style="text-align:right">${money(f.paidTotal)}</td></tr><tr class="tot"><td>Bakiye</td><td style="text-align:right">${money(f.balance)}</td></tr></table>

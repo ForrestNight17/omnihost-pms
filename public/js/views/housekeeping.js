@@ -112,7 +112,7 @@ function tableHtml(list) {
 function rowHtml(room) {
   const active = room.occupied || room.reserved;
   return `<tr data-room="${room.id}">
-    <td class="t-strong">${room.number}</td>
+    <td class="t-strong">${escapeHtml(room.number)}</td>
     <td class="muted">${room.block || '—'} · ${room.floor}. kat</td>
     <td>${escapeHtml(room.typeName)}</td>
     <td>${durumBadge(room)}${room.outOfOrder ? ' <span class="badge b-danger">Arızalı</span>' : ''}</td>

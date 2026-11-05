@@ -166,7 +166,7 @@ function timelineView(data) {
     </div>
     <div class="legend mt">
       <span><i style="background:#c9a24b"></i> Doğrudan</span>
-      ${store.channels.map((c) => `<span><i style="background:${c.color}"></i> ${escapeHtml(c.name)}</span>`).join('')}
+      ${store.channels.map((c) => `<span><i style="background:${escapeHtml(c.color)}"></i> ${escapeHtml(c.name)}</span>`).join('')}
     </div>`;
 }
 
@@ -182,7 +182,7 @@ function openDayModal(ctx, date, data) {
     <h4 style="font-size:.95rem;margin:14px 0 8px">${title} <span class="muted" style="font-family:var(--sans);font-size:.8rem">(${list.length})</span></h4>
     ${list.length ? `<div class="mini-list">${list.map((r) => `
       <div class="mini-row">
-        <div class="mr-main"><strong>${escapeHtml(r.guestName)}</strong><span>${escapeHtml(r.roomTypeName)}${r.roomNumber ? ` · Oda ${r.roomNumber}` : ''} · ${escapeHtml(r.channelName)}</span></div>
+        <div class="mr-main"><strong>${escapeHtml(r.guestName)}</strong><span>${escapeHtml(r.roomTypeName)}${r.roomNumber ? ` · Oda ${escapeHtml(r.roomNumber)}` : ''} · ${escapeHtml(r.channelName)}</span></div>
         ${resBadge(r.status)}
       </div>`).join('')}</div>` : `<p class="muted" style="font-size:.84rem;margin:0">${emptyTxt}</p>`}`;
 

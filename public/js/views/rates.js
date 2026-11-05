@@ -64,7 +64,7 @@ export async function render(container, ctx) {
 
   const rows = grid.map((row) => `
     <tr>
-      <td class="ri-typecell">${escapeHtml(row.roomType.name)}<div class="muted" style="font-weight:400;font-size:.72rem">${row.roomType.code}</div></td>
+      <td class="ri-typecell">${escapeHtml(row.roomType.name)}<div class="muted" style="font-weight:400;font-size:.72rem">${escapeHtml(row.roomType.code)}</div></td>
       ${row.days.map((d) => {
         const cls = (d.stopSell ? 'stop' : (d.available <= 0 ? 'full' : '')) + (d.date === t ? ' today' : '');
         const availCls = d.available <= 0 ? 'no' : (d.available <= 2 ? 'lo' : 'ok');

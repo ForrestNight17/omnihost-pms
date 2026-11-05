@@ -52,7 +52,7 @@ function openUserModal(user, onDone) {
     <div class="field"><label>Parola ${isEdit ? '<span class="hint">(boş=değişmez)</span>' : ''}</label><input class="input" type="password" id="uPass" autocomplete="new-password"></div>`;
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Vazgeç</button><button class="btn btn-gold" id="saveUser">${isEdit ? 'Kaydet' : 'Oluştur'}</button>`;
-  const m = openModal({ title: isEdit ? `Kullanıcı · ${user.username}` : 'Yeni Kullanıcı', body, footer: foot });
+  const m = openModal({ title: isEdit ? `Kullanıcı · ${escapeHtml(user.username)}` : 'Yeni Kullanıcı', body, footer: foot });
   foot.querySelector('#saveUser').addEventListener('click', async () => {
     const name = m.el.querySelector('#uName').value.trim();
     const role = m.el.querySelector('#uRole').value;

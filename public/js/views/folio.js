@@ -43,8 +43,8 @@ async function renderFolios(ctx, el) {
       const bal = f ? f.balance : 0;
       return `<tr data-res="${r.id}" style="cursor:pointer">
         <td class="t-strong">${escapeHtml(r.guestName)}</td>
-        <td>${r.roomNumber ? '<b>' + r.roomNumber + '</b>' : '—'}</td>
-        <td class="t-code">${r.code}</td>
+        <td>${r.roomNumber ? '<b>' + escapeHtml(r.roomNumber) + '</b>' : '—'}</td>
+        <td class="t-code">${escapeHtml(r.code)}</td>
         <td class="t-right">${f ? money(f.chargeTotal) : '—'}</td>
         <td class="t-right">${f ? money(f.paidTotal) : '—'}</td>
         <td class="t-right"><b style="color:${bal > 1 ? 'var(--danger)' : 'var(--ok)'}">${f ? money(bal) : '—'}</b></td>
@@ -67,7 +67,7 @@ async function renderInvoices(el) {
   el.innerHTML = `<div class="table-wrap"><table class="tbl">
     <thead><tr><th>Fatura No</th><th>Tür</th><th>Müşteri</th><th>VKN/TCKN</th><th class="t-right">Matrah</th><th class="t-right">KDV</th><th class="t-right">Genel Toplam</th><th>e-Belge</th><th>Tarih</th></tr></thead>
     <tbody>${list.map((v) => `<tr>
-      <td class="t-code">${v.number}</td>
+      <td class="t-code">${escapeHtml(v.number)}</td>
       <td>${v.type === 'efatura' ? '<span class="badge b-info">e-Fatura</span>' : '<span class="badge b-navy">e-Arşiv</span>'}</td>
       <td>${escapeHtml(v.customerName || '—')}</td>
       <td class="mono">${escapeHtml(v.taxNumber || '—')}</td>
@@ -87,7 +87,7 @@ export async function openFolioModal(ctx, reservationId) {
     sum = await api.get(`/api/reservations/${reservationId}/folio`);
   } catch (e) { toast(e.message, 'err'); return; }
 
-  const m = openModal({ title: `Folio · ${resv.code}`, body: spinner(), footer: '<button class="btn btn-ghost" data-close>Kapat</button>', wide: true });
+  const m = openModal({ title: `Folio · ${escapeHtml(resv.code)}`, body: spinner(), footer: '<button class="btn btn-ghost" data-close>Kapat</button>', wide: true });
   renderBody();
 
   function renderBody() {
@@ -115,7 +115,7 @@ function folioHtml(resv, sum) {
     <div class="flex between wrap mb">
       <div class="flex"><div class="mr-av">${initials(resv.guestName)}</div>
         <div><div class="t-strong">${escapeHtml(resv.guestName)}</div>
-        <div class="muted" style="font-size:.8rem">${escapeHtml(resv.roomTypeName)}${resv.roomNumber ? ' · Oda ' + resv.roomNumber : ''} · ${fmtDateShort(resv.checkIn)}→${fmtDateShort(resv.checkOut)}</div></div></div>
+        <div class="muted" style="font-size:.8rem">${escapeHtml(resv.roomTypeName)}${resv.roomNumber ? ' · Oda ' + escapeHtml(resv.roomNumber) : ''} · ${fmtDateShort(resv.checkIn)}→${fmtDateShort(resv.checkOut)}</div></div></div>
       <div class="flex gap-sm">
         <button class="btn btn-sm btn-ghost" data-act="extra">+ Ekstra</button>
         <button class="btn btn-sm btn-primary" data-act="payment">+ Tahsilat</button>

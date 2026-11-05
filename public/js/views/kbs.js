@@ -22,7 +22,7 @@ export async function render(container, ctx) {
         ${pending.length ? `<div class="mini-list">${pending.map((r) => `
           <div class="mini-row">
             <div class="mr-av">${initials(r.guestName)}</div>
-            <div class="mr-main"><strong>${escapeHtml(r.guestName)}</strong><span>Oda ${r.roomNumber || '—'} · ${escapeHtml(r.nationality || 'TR')} · ${escapeHtml(r.code)}</span></div>
+            <div class="mr-main"><strong>${escapeHtml(r.guestName)}</strong><span>Oda ${escapeHtml(r.roomNumber || '—')} · ${escapeHtml(r.nationality || 'TR')} · ${escapeHtml(r.code)}</span></div>
             <button class="btn btn-sm btn-gold" data-kbs="${r.id}">Giriş Bildir</button>
           </div>`).join('')}</div>` : emptyState('✓', 'Tüm girişler bildirildi.')}
       </div>
