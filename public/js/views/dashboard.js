@@ -47,7 +47,7 @@ export async function render(container, ctx) {
   const k = d.kpis;
   const rsx = d.roomStatus || { dolu: r.occupied, bos: r.available, rezerve: 0, arizali: r.outOfOrder };
   const slices = [
-    { label: 'Dolu', value: rsx.dolu, color: 'var(--navy)' },
+    { label: 'Dolu', value: rsx.dolu, color: 'var(--status-dolu)' },
     { label: 'Boş', value: rsx.bos, color: 'var(--ok)' },
     { label: 'Rezerve', value: rsx.rezerve, color: 'var(--gold)' },
     { label: 'Arızalı', value: rsx.arizali, color: 'var(--danger)' },

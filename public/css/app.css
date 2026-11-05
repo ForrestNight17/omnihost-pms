@@ -28,6 +28,7 @@
   --danger: #e11d48;    --danger-bg: #fdecef; --danger-line:#f6c6d1;
   --info: #2563eb;      --info-bg: #e9f0fe;  --info-line:#c3d6fb;
   --teal: #0d9488;      --teal-bg:#e2f3f1;
+  --status-dolu: var(--navy);
 
   --shadow-sm: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
   --shadow: 0 6px 20px -6px rgba(16,24,40,.16), 0 2px 6px -2px rgba(16,24,40,.08);
@@ -494,7 +495,7 @@ table.tbl tbody tr:last-child td { border-bottom: none; }
 .chip-dirty .hkc-dot { background: var(--warn); }
 .chip-clean .hkc-dot { background: var(--ok); }
 .chip-reserved .hkc-dot { background: var(--info); }
-.chip-occupied .hkc-dot { background: var(--navy); }
+.chip-occupied .hkc-dot { background: var(--status-dolu); }
 .chip-occupied.active .hkc-dot { box-shadow: 0 0 0 2px rgba(255,255,255,.4); }
 .chip-ooo .hkc-dot { background: var(--danger); }
 
@@ -634,6 +635,7 @@ a:focus-visible, button:focus-visible, .nav-item:focus-visible, .room-tile:focus
   --danger: #fb7185; --danger-bg: rgba(225,29,72,.20); --danger-line: rgba(251,113,133,.38);
   --info: #60a5fa; --info-bg: rgba(37,99,235,.20);  --info-line: rgba(96,165,250,.38);
   --teal: #2dd4bf; --teal-bg: rgba(13,148,136,.20);
+  --status-dolu: #546b8a;
 
   --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
   --shadow: 0 8px 24px rgba(0,0,0,.5);
@@ -709,6 +711,7 @@ a:focus-visible, button:focus-visible, .nav-item:focus-visible, .room-tile:focus
   --line: #d3dae3; --line-strong: #c0c9d5;
   --ink: #1f2733; --ink-soft: #3d4756; --muted: #697382;
   --info: #2b6cb0; --info-bg: #e8f1fa; --info-line: #c2d9f0;
+  --status-dolu: var(--navy);
   --radius: 6px; --radius-sm: 4px;
   --shadow-sm: none;
   --shadow: 0 1px 3px rgba(20,30,50,.10);
@@ -722,6 +725,7 @@ a:focus-visible, button:focus-visible, .nav-item:focus-visible, .room-tile:focus
   --line: #273043; --line-strong: #384358;
   --ink: #e7ecf5; --ink-soft: #b6c1d4; --muted: #8592a8;
   --info: #5b9be0; --info-bg: rgba(43,108,176,.20); --info-line: rgba(91,155,224,.4);
+  --status-dolu: #546b8a;
   --shadow-sm: none; --shadow: 0 1px 3px rgba(0,0,0,.4); --shadow-lg: 0 10px 30px rgba(0,0,0,.55);
   --sidebar-bg: #111a2b; --sidebar-hover: rgba(255,255,255,.05); --sidebar-active: rgba(79,143,214,.18); --fill: var(--ivory-dim);
 }
