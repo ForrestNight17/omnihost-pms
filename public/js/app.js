@@ -91,7 +91,7 @@ function navItemHtml(r) {
   let badge = '';
   if (r.badge === 'arrivals' && badgeCounts.pendingArrivals) badge = `<span class="nav-badge">${badgeCounts.pendingArrivals}</span>`;
   if (r.badge === 'clean' && badgeCounts.pendingHousekeeping) badge = `<span class="nav-badge">${badgeCounts.pendingHousekeeping}</span>`;
-  return `<a class="nav-item ${active ? 'active' : ''}" href="${r.hash}"><span class="ico">${r.icon}</span><span class="nav-label">${r.label}</span>${badge}</a>`;
+  return `<a class="nav-item ${active ? 'active' : ''}" href="${r.hash}" title="${escapeHtml(r.label)}" data-label="${escapeHtml(r.label)}"><span class="ico">${r.icon}</span><span class="nav-label">${r.label}</span>${badge}</a>`;
 }
 
 function renderNav() {
@@ -145,11 +145,26 @@ async function mount() {
   view.focus();
 }
 
-// ---------- Kenar çubuğu (mobil) ----------
+// ---------- Kenar çubuğu (mobil & masaüstü toggle-bar) ----------
 function openSidebar() { document.getElementById('sidebar').classList.add('open'); addScrim(); }
 function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); removeScrim(); }
 function addScrim() { if (document.querySelector('.scrim')) return; const s = document.createElement('div'); s.className = 'scrim'; s.addEventListener('click', closeSidebar); document.body.appendChild(s); }
 function removeScrim() { const s = document.querySelector('.scrim'); if (s) s.remove(); }
+
+function toggleSidebar() {
+  if (window.innerWidth <= 900) {
+    const sb = document.getElementById('sidebar');
+    if (sb.classList.contains('open')) closeSidebar();
+    else openSidebar();
+  } else {
+    const appEl = document.getElementById('app');
+    const isCollapsed = appEl.classList.toggle('sidebar-collapsed');
+    document.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);
+    try {
+      localStorage.setItem('omnihost:sidebar-collapsed', isCollapsed ? 'true' : 'false');
+    } catch {}
+  }
+}
 
 async function globalSyncAll(btn) {
   const original = btn.innerHTML;
@@ -240,7 +255,28 @@ async function boot() {
   await loadMeta();
   setDateChip();
 
-  document.getElementById('menuToggle').addEventListener('click', openSidebar);
+    // Kenar çubuğu (toggle-bar) durumunu geri yükle
+  try {
+    const saved = localStorage.getItem('omnihost:sidebar-collapsed') === 'true';
+    if (saved && window.innerWidth > 900) {
+      document.getElementById('app').classList.add('sidebar-collapsed');
+      document.documentElement.classList.add('sidebar-collapsed');
+    }
+  } catch {}
+
+  document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+  const collapseBtn = document.getElementById('sidebarCollapseBtn');
+  if (collapseBtn) collapseBtn.addEventListener('click', toggleSidebar);
+
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    }
+  });
   setTheme(currentTheme()); // düğme ikonunu senkronla
   document.getElementById('themeToggle').addEventListener('click', () => setTheme(currentTheme() === 'dark' ? 'light' : 'dark'));
   document.getElementById('logoutBtn').addEventListener('click', async () => {
