@@ -1,7 +1,8 @@
 # 📊 OmniHost PMS — Profesyonel Tanıtım & Pitch Deck Sunumu
 **Akıllı, Hızlı ve Adil Otel Yönetiminin Yeni Çağı**  
 *İstanbul Kültür Üniversitesi · Tasarım Fabrikası Başvurusu & LinkedIn B2B Sunum Dosyası*  
-*Hazırlayan:* **Ali Musayev** · *Tarih:* 2026
+*Hazırlayan:* **Ali Musayev** · *Tarih:* 2026  
+*PowerPoint Dosyası:* [OmniHost_Sunum_Ali_Musayev.pptx](file:///C:/Users/musay/omnihost-pms/OmniHost_Sunum_Ali_Musayev.pptx)
 
 ---
 
@@ -12,7 +13,7 @@
 3. **Sayfa 3:** [Pazar Analizi & Problem 1](#sayfa-3-pazar-analizi--problem-1-tekellesme--agir-maliyet-tuzagi) — *Tekelleşme & %0.75–%1.25 Ciro Komisyonu Tuzağı*
 4. **Sayfa 4:** [Problem Analizi 2](#sayfa-4-problem-analizi-2-eski-nesil-arayuzler--fonksiyonel-kisitlamalar) — *2000'lerden Kalma Hantal Arayüzler & Kopuk Sistemler*
 5. **Sayfa 5:** [Çözüm: OmniHost PMS](#sayfa-5-cozum-omnihost-pms--akilli-hizli-ve-adil-otel-ekosistemi) — *Hepsi Bir Arada & %0 Ciro Payı Devrimi*
-6. **Sayfa 6:** [Ürün & Canlı Arayüz Vitrini](#sayfa-6-urun--canli-arayuz-vitrini-pms-in-action) — *Oda Rafı, Doluluk KPI'ları & Yeni Toggle-Bar Deneyimi*
+6. **Sayfa 6:** [Ürün & Canlı Arayüz Vitrini](#sayfa-6-urun--canli-arayuz-vitrini-dashboard--raporlar) — *Ana Sayfa (Dashboard) & Finansal Raporlama Ekranları*
 7. **Sayfa 7:** [İş Modeli & Karşılaştırmalı Maliyet Analizi](#sayfa-7-is-modeli--karsilastirmali-maliyet-analizi) — *Geleneksel Tekeller vs. OmniHost*
 8. **Sayfa 8:** [Hedef Pazar & Büyüme Stratejisi](#sayfa-8-hedef-pazar--buyume-stratejisi-go-to-market) — *İstanbul Butik Otelleri & Saha Hakimiyeti*
 9. **Sayfa 9:** [Yol Haritası & Tasarım Fabrikası Hedefleri](#sayfa-9-yol-haritasi--tasarim-fabrikasi-vizyonu) — *Akademik İş Birliği, AI Geleceği & Kapanış*
@@ -26,7 +27,7 @@
 ![OmniHost Logo](file:///C:/Users/musay/.gemini/antigravity/brain/2d2cf7f1-ec25-4ac5-b2d0-7f02ecae8fab/omnihost-logo-full.png)
 
 ### **Ali Musayev × OmniHost PMS**
-#### *Yeni Nesil Yapay Zekâ Destekli Otel Yönetim Sistemi (PMS) & Kanal Yöneticisi*
+#### *Yeni Nesil Yapay Zekâ Destekli Otel Yönetim Platformu & Kanal Yöneticisi*
 
 > *"Otelcilik yazılımlarında sahada yaşanan gerçek sancıları, bir yazılımcının analitik gözüyle çözmek için yola çıktım. Amacımız; otelcinin alın terini tekelleşmiş komisyonlara kaptırmadığı, şeffaf, modern ve hızlı bir teknoloji çağı başlatmak."*
 
@@ -37,11 +38,11 @@
 | Alan | Bilgi |
 | :--- | :--- |
 | **Kurucu & Baş Geliştirici** | **Ali Musayev** |
-| **Eğitim** | **Bilgisayar Mühendisliği 3. Sınıf Öğrencisi** (Computer Engineering Junior) |
+| **Eğitim** | **Computer Engineering (3. Sınıf)** |
 | **E-posta** | [musayevali729@gmail.com](mailto:musayevali729@gmail.com) |
 | **Telefon** | [+90 544 407 2205](tel:+905444072205) |
 | **LinkedIn** | [linkedin.com/in/ali-musayev-a37a92245](https://www.linkedin.com/in/ali-musayev-a37a92245/) |
-| **Uzmanlık & Yetkinlikler** | Full-Stack Node.js Mimarisi, Otel Operasyonları, Gelir Yönetimi (Revenue Management), Ön Büro Denetimi (Night Audit) |
+| **Sektörel Deneyim** | 2 Yıl The Royal Luxury Hotel (Ön Büro Resepsiyonist & Satış-Pazarlama Müdür Yrd.) |
 | **Başvuru Mercii** | **İstanbul Kültür Üniversitesi — Tasarım Fabrikası** |
 
 ---
@@ -128,7 +129,7 @@ flowchart LR
 
 <div style="page-break-after: always;"></div>
 
-# Sayfa 4: Problem Analizi 2: Eski Nesil Arayüzler & Fonksiyonel Kısıtlamalar
+# Sayfa 4: Problem Analizi 2: Eski Nesil Arayüzler & Fonksiyonel Kısıtlar
 
 Maliyet yükünün ötesinde, pazardaki mevcut yazılımlar operasyonel olarak da çağın gerisinde kalmıştır:
 
@@ -147,7 +148,6 @@ Maliyet yükünün ötesinde, pazardaki mevcut yazılımlar operasyonel olarak d
 ### 1. 2000'lerden Kalma Hantal Masaüstü Arayüzleri
 - Mevcut sistemlerin çoğu (Adonis, Fidelio vb.) 15-20 yıllık mimarilere sahiptir.
 - Karmaşık, yüzlerce alt pencereden oluşan, gözü yoran ve modern kullanıcı deneyiminden (UX) tamamen uzak ekranlar.
-- Resepsiyonist hata yapmaktan korkmakta, menüler arasında kaybolmaktadır.
 
 ### 2. Personel Eğitim Maliyeti ve Sirkülasyon Krizi
 - Butik otellerde ön büro personeli sirkülasyonu yüksektir.
@@ -169,11 +169,11 @@ OmniHost PMS; sahada kazanılan tecrübe ile en son web teknolojilerini harmanla
 ```mermaid
 graph TD
     subgraph OMNIHOST_CORE ["OmniHost Çekirdek Platformu (All-in-One)"]
-        F1["🛎️ Ön Büro & Görsel Oda Rafı"]
+        F1["🛎️ Ön Büro & Rezervasyonlar"]
         F2["🌐 Dahili Channel Manager v2"]
         F3["💳 Kasa, Folyo & Ekstra Masraflar"]
         F4["🌙 Otomatik Gece Denetimi (Night Audit)"]
-        F5["📊 Gelir & Doluluk Analitiği (KPIs)"]
+        F5["📊 Finansal & Operasyonel Raporlama"]
         F6["🇹🇷 KBS & e-Fatura Mevzuat Uyumu"]
     end
     
@@ -185,7 +185,7 @@ graph TD
 
 1. **%0 Ciro Payı Devrimi (Fair Pricing):**
    - **Otelin cirosundan tek bir kuruş bile komisyon ALMIYORUZ.**
-   - Sadece şeffaf, sabit ve makul bir aylık abonelik ücreti. Otel 1 Milyon TL de kazansa 10 Milyon TL de kazansa yazılım bedeli değişmez!
+   - Sadece şeffaf, sabit ve makul bir aylık abonelik ücreti. Otel ne kadar büyürse büyüsün yazılım bedeli değişmez!
 2. **15 Dakikada Kullanıma Başlama:**
    - Sade, temiz ve modern arayüz tasarımı.
    - Herhangi bir personelin 15 dakikalık kısa bir brifingle sıfır hatayla kullanabileceği sezgisel iş akışı.
@@ -199,34 +199,28 @@ graph TD
 
 <div style="page-break-after: always;"></div>
 
-# Sayfa 6: Ürün & Canlı Arayüz Vitrini (PMS in Action)
+# Sayfa 6: Ürün & Canlı Arayüz Vitrini (Dashboard & Raporlar)
 
-OmniHost PMS, otelin tüm kritik operasyonlarını tek bir görsel kontrol merkezinde birleştirir.
+OmniHost PMS, otel operasyonunun tüm nabzını tutan gösterge paneli ve detaylı finansal raporlama ekranlarıyla karmaşayı ortadan kaldırır.
 
 ````carousel
-![Oda Durumu & KPI Analitiği (Açık Tema)](file:///C:/Users/musay/.gemini/antigravity/brain/2d2cf7f1-ec25-4ac5-b2d0-7f02ecae8fab/pms-donut-light.png)
+![Ana Sayfa (Canlı Gösterge Paneli)](file:///C:/Users/musay/.gemini/antigravity/brain/2d2cf7f1-ec25-4ac5-b2d0-7f02ecae8fab/screenshot-dashboard.png)
 <!-- slide -->
-![Oda Durumu & KPI Analitiği (Koyu Tema)](file:///C:/Users/musay/.gemini/antigravity/brain/2d2cf7f1-ec25-4ac5-b2d0-7f02ecae8fab/pms-donut-dark.png)
-<!-- slide -->
-![Resmi 3D Marka Kimliği](file:///C:/Users/musay/.gemini/antigravity/brain/2d2cf7f1-ec25-4ac5-b2d0-7f02ecae8fab/omnihost-brand-hero.jpg)
+![Finansal ve Operasyonel Raporlar](file:///C:/Users/musay/.gemini/antigravity/brain/2d2cf7f1-ec25-4ac5-b2d0-7f02ecae8fab/screenshot-reports.png)
 ````
 
-### 🖥️ Öne Çıkan Canlı Arayüz Özellikleri
+### 🖥️ Temel Arayüz Yetkinlikleri
 
-#### 1. Canlı Gösterge Paneli & Oda Durumu Halka Grafiği (Donut Chart)
-- **Anlık Metrikler:** Toplam 62 oda, **%72 Doluluk Oranı**, **146.400 ₺ Bu Geceki Oda Geliri**.
-- **Canlı Durum Dağılımı:** 44 Dolu, 9 Boş, 8 Rezerve, 1 Arızalı oda.
-- **Kusursuz Tema Desteği:** Açık temada klasik lacivert/arduvaz zarafeti, karanlık temada gözü yormayan yüksek kontrastlı (`#546b8a`) profesyonel renk paleti.
+#### 1. Modern Gösterge Paneli (Ana Sayfa)
+- Anlık doluluk oranları, gecelik oda gelirleri, bekleyen giriş-çıkış operasyonları ve oda durumlarının tek bakışta izlendiği kontrol merkezi.
+- Ön büro ekibinin tüm gün ihtiyaç duyduğu operasyonel göstergeleri tek bir temiz ekranda sunar.
 
-#### 2. Adonis Tarzı Kompakt Oda Rafı (Room Rack)
-- Tüm odaları kat ve numara hiyerarşisinde listeleyen, tek bakışta oda temizlik durumunu (`Temiz`, `Kirli`, `Arızalı`) ve misafir giriş/çıkış takvimini gösteren kompakt masaüstü tablosu.
+#### 2. Detaylı Finansal & Operasyonel Raporlar
+- Gelir ve doluluk analizleri, OTA kanal üretimleri (komisyon vs. net gelir dökümleri), KDV ve muhasebe raporları anında hazır.
+- Otel sahibinin ve yöneticisinin stratejik kararlar almasını sağlayan analitik tablolar.
 
-#### 3. Yeni Nesil Toggle-Bar (Daraltılabilir Mini Kenar Çubuğu)
-- İster üst bardaki `☰` menü düğmesinden, ister logo yanındaki ok butonundan, isterse de evrensel `Ctrl + B` kısayoluyla tek tıkla **68px mini ray** moduna geçiş.
-- Geniş rezervasyon tabloları ve oda haritaları için maksimum yatay çalışma alanı; ikon üzerine gelindiğinde beliren akıllı uçan etiketler (tooltip).
-
-#### 4. Tek Tıkla Otomatik Gece Denetimi (Night Audit)
-- Saat 00:00'da gün sonunu kapatır; konaklayan tüm odaların geceleme ücretlerini otomatik olarak folyolara işler, iş gününü bir sonraki güne devreder ve resmi KBS çıktılarını hazırlar.
+#### 3. Hızlı & Kolay Kullanım
+- Gereksiz karmaşadan arındırılmış, personelin dakikalar içinde benimsediği akıcı kullanıcı deneyimi.
 
 ---
 
@@ -329,8 +323,8 @@ timeline
 
 Gelin, bu dönüşümü birlikte başlatalım.
 
-- **Kurucu:** Ali Musayev (Bilgisayar Mühendisliği 3. Sınıf)
+- **Kurucu:** Ali Musayev (Computer Engineering - 3. Sınıf)
 - **Telefon:** [+90 544 407 2205](tel:+905444072205)
 - **E-posta:** [musayevali729@gmail.com](mailto:musayevali729@gmail.com)
 - **LinkedIn:** [linkedin.com/in/ali-musayev-a37a92245](https://www.linkedin.com/in/ali-musayev-a37a92245/)
-- **Proje Konumu:** İstanbul, Türkiye
+- **PowerPoint Dosyası:** [OmniHost_Sunum_Ali_Musayev.pptx](file:///C:/Users/musay/omnihost-pms/OmniHost_Sunum_Ali_Musayev.pptx)
