@@ -21,12 +21,20 @@ export async function render(container, ctx) {
   } catch (e) { container.innerHTML = emptyState('⚠️', e.message); return; }
   const periods = (dash && dash.channelPeriods) || { day: [], week: [], month: dash && dash.channelBreakdown || [] };
   let curPeriod = 'month';
-  const channelColor = (src) => { if (!src || src === 'direct') return 'var(--gold)'; const ch = store.channel(src); return ch ? ch.color : 'var(--navy)'; };
+  const channelColor = (x) => {
+    const src = x && typeof x === 'object' ? x.source : x;
+    if (!src || src === 'direct') return 'var(--gold)';
+    const ch = channels.find((c) => c.id === src || (x && c.name === x.name)) || store.channel(src);
+    return ch && ch.color ? ch.color : 'var(--navy)';
+  };
   const PERIOD_LABEL = { day: 'Günlük', week: 'Haftalık', month: 'Aylık' };
   const channelBars = (list) => {
     if (!list.length) return emptyState('📊', 'Bu dönemde kanal geliri yok.');
     const maxRev = Math.max(1, ...list.map((x) => x.revenue));
-    return list.map((x) => `<div class="bar-row"><div class="bl"><span class="sw" style="background:${escapeHtml(channelColor(x.source))}"></span>${escapeHtml(x.name)}</div><div class="bar-track"><i style="width:${Math.max(3, Math.round((x.revenue / maxRev) * 100))}%"></i></div><div class="bv">${money(x.revenue)}</div></div>`).join('')
+    return list.map((x) => {
+      const clr = escapeHtml(channelColor(x));
+      return `<div class="bar-row"><div class="bl"><span class="sw" style="background:${clr}"></span>${escapeHtml(x.name)}</div><div class="bar-track"><i style="width:${Math.max(3, Math.round((x.revenue / maxRev) * 100))}%;background:${clr}"></i></div><div class="bv">${money(x.revenue)}</div></div>`;
+    }).join('')
       + `<div class="muted" style="font-size:.78rem;margin-top:12px">${PERIOD_LABEL[curPeriod]} · ${list.reduce((s, x) => s + x.count, 0)} rezervasyon · kaynağa göre gelir</div>`;
   };
 
@@ -52,6 +60,15 @@ export async function render(container, ctx) {
     </div>
 
     <div class="card mb">
+      <div class="card-head"><h3>OTA Kanalları</h3><span class="card-sub">${channels.length} kanal</span></div>
+      <div class="card-pad">
+        <div class="channels" id="channels">
+          ${channels.map((c) => channelCard(c, resByChannel[c.id] || 0)).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb">
       <div class="card-head">
         <div class="flex gap-sm" style="align-items:center">
           <h3>Kanal Geliri</h3>
@@ -63,15 +80,6 @@ export async function render(container, ctx) {
         </div>
       </div>
       <div class="card-pad"><div id="channelBody">${channelBars(periods[curPeriod])}</div></div>
-    </div>
-
-    <div class="card mb">
-      <div class="card-head"><h3>OTA Kanalları</h3><span class="card-sub">${channels.length} kanal</span></div>
-      <div class="card-pad">
-        <div class="channels" id="channels">
-          ${channels.map((c) => channelCard(c, resByChannel[c.id] || 0)).join('')}
-        </div>
-      </div>
     </div>
 
     <div class="card">
@@ -97,7 +105,7 @@ export async function render(container, ctx) {
     const channel = channels.find((c) => c.id === id);
     const act = btn.dataset.act;
 
-    if (act === 'test') return runTest(id, btn);
+    if (act === 'test') return runTest(ctx, id, btn);
     if (act === 'connect') return runConnect(ctx, id, btn);
     if (act === 'disconnect') return runDisconnect(ctx, id, btn);
     if (act === 'sync') return openSyncModal(ctx, channel);
@@ -144,11 +152,13 @@ function logItem(l) {
 }
 
 // ---------- Aksiyonlar ----------
-async function runTest(id, btn) {
+async function runTest(ctx, id, btn) {
   const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Test…';
   try {
     const res = await api.post(`/api/channels/${id}/test`);
     toast(res.ok ? `✓ ${res.message}` : `✗ ${res.message}`, res.ok ? 'ok' : 'err');
+    await store.refreshChannels();
+    if (ctx && ctx.reload) ctx.reload();
   } catch (e) { toast(e.message, 'err'); }
   finally { btn.disabled = false; btn.textContent = orig; }
 }

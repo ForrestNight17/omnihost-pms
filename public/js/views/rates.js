@@ -36,7 +36,7 @@ export async function render(container, ctx) {
     <div class="card mb"><div class="card-pad" style="padding:12px 16px">
       <div class="legend"><span>Hücreye tıklayıp fiyat/kontenjan/kısıtlama düzenleyin.</span>
         <span style="margin-left:auto"><i style="background:var(--danger-bg)"></i> Stop-sell</span>
-        <span><i style="background:#f0eadb"></i> Dolu</span>
+        <span><i class="ri-legend-full"></i> Dolu</span>
         <span><b class="ri-badges"><i>min</i></b> Min. konaklama</span>
       </div>
     </div></div>

@@ -142,7 +142,8 @@ async function mount() {
     console.error(err);
     view.innerHTML = `<div class="empty"><div class="em-ico">⚠️</div><p>Sayfa yüklenemedi: ${escapeHtml(err.message)}</p></div>`;
   }
-  view.focus();
+  window.scrollTo(0, 0);
+  view.focus({ preventScroll: true });
 }
 
 // ---------- Kenar çubuğu (mobil & masaüstü toggle-bar) ----------

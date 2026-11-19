@@ -108,27 +108,53 @@ export async function render(container, ctx) {
 
   const bDate = dash.date;
   const r = dash.rooms, k = dash.kpis;
-  const rsx = dash.roomStatus || { dolu: r.occupied, bos: r.available, rezerve: 0, arizali: r.outOfOrder };
+  const doluCnt = rooms.filter((x) => !x.outOfOrder && x.occupied).length;
+  const rezerveCnt = rooms.filter((x) => !x.outOfOrder && !x.occupied && x.reserved).length;
+  const kirliCnt = rooms.filter((x) => !x.outOfOrder && !x.occupied && !x.reserved && x.housekeeping === 'dirty').length;
+  const bosCnt = rooms.filter((x) => !x.outOfOrder && !x.occupied && !x.reserved && x.housekeeping !== 'dirty').length;
+  const arizaliCnt = rooms.filter((x) => x.outOfOrder).length;
   const slices = [
-    { label: 'Dolu', value: rsx.dolu, color: 'var(--status-dolu)' },
-    { label: 'Boş', value: rsx.bos, color: 'var(--ok)' },
-    { label: 'Rezerve', value: rsx.rezerve, color: 'var(--gold)' },
-    { label: 'Arızalı', value: rsx.arizali, color: 'var(--danger)' },
+    { label: 'Dolu', value: doluCnt, color: 'var(--danger)' },
+    { label: 'Boş', value: bosCnt, color: 'var(--info)' },
+    { label: 'Rezerve', value: rezerveCnt, color: 'var(--ok)' },
+    { label: 'Kirli', value: kirliCnt, color: 'var(--status-kirli)' },
+    { label: 'Arızalı', value: arizaliCnt, color: 'var(--status-arizali)' },
   ];
 
+  let summaryCollapsed = localStorage.getItem('rec_summary_collapsed') === '1';
+
   container.innerHTML = `
-    <div class="page-head">
+    <div class="page-head rec-head">
       <div><h2>Resepsiyon</h2><div class="sub">${fmtDate(bDate)} · ön büro</div></div>
-      <button class="btn btn-gold" id="walkin">+ Walk-in / Yeni Rezervasyon</button>
+      <div class="flex gap-sm">
+        <button class="btn btn-ghost btn-sm" id="toggleRecSummary" title="Özet panelini aç / kapat">${summaryCollapsed ? '▼ Özeti Göster' : '▲ Özeti Gizle'}</button>
+        <button class="btn btn-gold" id="walkin">+ Walk-in / Yeni Rezervasyon</button>
+      </div>
     </div>
 
-    <div class="dash-top mb">
-      <div class="kpi kpi-center"><div class="kpi-label">Doluluk Oranı</div><div class="kpi-value">${k.occupancyPct}<small>%</small></div><div class="kpi-foot">${r.occupied}/${r.sellable} oda dolu</div></div>
-      <div class="kpi kpi-center accent-navy"><div class="kpi-label">Bu Geceki Oda Geliri</div><div class="kpi-value" style="font-size:1.5rem">${money(k.roomRevenueTonight)}</div><div class="kpi-foot">konaklayan misafirler</div></div>
-      <div class="card"><div class="card-head"><h3>Oda Durumu</h3><span class="card-sub">${r.total} oda</span></div>
-        <div class="card-pad"><div class="donut-wrap"><div class="donut">${donutSVG(slices)}</div>
-          <div class="donut-legend">${slices.map((s) => `<div class="dl-item"><span class="dl-dot" style="background:${s.color}"></span><span class="dl-lbl">${s.label}</span><b class="dl-val">${s.value}</b></div>`).join('')}</div>
-        </div></div>
+    <div class="rec-top ${summaryCollapsed ? 'collapsed' : ''}" id="recTopSummary">
+      <div class="kpi rec-kpi">
+        <div class="kpi-label">Doluluk Oranı</div>
+        <div class="rec-kpi-row">
+          <div class="kpi-value">${k.occupancyPct}<small>%</small></div>
+          <div class="kpi-foot">${r.occupied}/${r.sellable} oda dolu</div>
+        </div>
+      </div>
+      <div class="kpi rec-kpi accent-navy">
+        <div class="kpi-label">Günlük Ciro</div>
+        <div class="rec-kpi-row">
+          <div class="kpi-value rec-rev">${money(k.roomRevenueTonight)}</div>
+          <div class="kpi-foot">bugün alınan ödemeler</div>
+        </div>
+      </div>
+      <div class="card rec-status-card">
+        <div class="rec-status-inner">
+          <div class="rec-donut">${donutSVG(slices)}</div>
+          <div class="rec-status-meta">
+            <div class="rec-status-title"><span>Oda Durumu</span><span class="card-sub">${r.total} oda</span></div>
+            <div class="rec-legend">${slices.map((s) => `<div class="rec-dl-item"><span class="dl-dot" style="background:${s.color}"></span><span class="dl-lbl">${s.label}</span><b class="dl-val">${s.value}</b></div>`).join('')}</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -140,6 +166,17 @@ export async function render(container, ctx) {
       <div class="rr-groupbar">Gruplamak istediğiniz kolonu buraya sürükleyin.</div>
       <div id="rackWrap">${rackHtml(rooms, bDate)}</div>
     </div>`;
+
+  const toggleBtn = container.querySelector('#toggleRecSummary');
+  const recTopEl = container.querySelector('#recTopSummary');
+  if (toggleBtn && recTopEl) {
+    toggleBtn.addEventListener('click', () => {
+      summaryCollapsed = !summaryCollapsed;
+      recTopEl.classList.toggle('collapsed', summaryCollapsed);
+      toggleBtn.textContent = summaryCollapsed ? '▼ Özeti Göster' : '▲ Özeti Gizle';
+      localStorage.setItem('rec_summary_collapsed', summaryCollapsed ? '1' : '0');
+    });
+  }
 
   container.querySelector('#walkin').addEventListener('click', () => {
     openReservationModal(ctx, { defaults: { checkIn: bDate, checkOut: addDays(bDate, 1) }, onSaved: () => ctx.reload() });
@@ -238,9 +275,9 @@ async function openRoomModal(ctx, room) {
       <div><div style="font-family:var(--serif);font-size:1.8rem;color:var(--ink)">Oda ${escapeHtml(room.number)}</div>
         <div class="muted">${escapeHtml(room.typeName)} · ${room.floor}. kat · ${room.capacity} kişilik</div></div>
       <div class="flex gap-sm wrap" style="justify-content:flex-end;max-width:220px">
-        ${occupied ? badge('Rezerve', 'b-navy') : badge('Boş', 'b-ok')}
-        ${room.housekeeping === 'dirty' ? badge('Kirli', 'b-warn') : badge('Temiz', 'b-ok')}
-        ${room.outOfOrder ? badge('Arızalı', 'b-danger') : ''}
+        ${occupied ? badge('Dolu', 'b-danger') : (room.reserved ? badge('Rezerve', 'b-ok') : badge('Boş', 'b-info'))}
+        ${room.housekeeping === 'dirty' ? badge('Kirli', 'b-brown') : badge('Temiz', 'b-ok')}
+        ${room.outOfOrder ? badge('Arızalı', 'b-muted') : ''}
       </div>
     </div>
     ${room.features && room.features.length ? `<div class="flex wrap gap-sm mt">${room.features.map((f) => `<span class="badge b-muted" >${escapeHtml(f)}</span>`).join('')}</div>` : ''}

@@ -20,13 +20,13 @@ export const HK_STATUS = {
 };
 export const HK_TYPE = { checkout: 'Çıkış Temizliği', stayover: 'Konaklama Temizliği', deep: 'Detaylı Temizlik', inspection: 'Kontrol' };
 export const ROOM_STATUS = {
-  available: { label: 'Boş', cls: 'b-ok' },
-  occupied: { label: 'Dolu', cls: 'b-navy' },
-  out_of_order: { label: 'Arızalı', cls: 'b-danger' },
+  available: { label: 'Boş', cls: 'b-info' },
+  occupied: { label: 'Dolu', cls: 'b-danger' },
+  out_of_order: { label: 'Arızalı', cls: 'b-muted' },
 };
 export const HK_ROOM = {
   clean: { label: 'Temiz', cls: 'b-ok' },
-  dirty: { label: 'Kirli', cls: 'b-warn' },
+  dirty: { label: 'Kirli', cls: 'b-brown' },
 };
 
 // ---------- Formatlama ----------
@@ -68,7 +68,7 @@ export function nights(a, b) {
   return Math.max(0, Math.round((parseISO(b) - parseISO(a)) / 86400000));
 }
 export function initials(name) {
-  return String(name || '?').split(/\s+/).slice(0, 2).map((s) => s[0] || '').join('').toUpperCase();
+  return escapeHtml(String(name || '?').split(/\s+/).slice(0, 2).map((s) => s[0] || '').join('').toUpperCase());
 }
 export function relTime(iso) {
   if (!iso) return '—';
@@ -179,4 +179,18 @@ export function confirmDialog({ title = 'Onay', message, confirmText = 'Onayla',
 export function spinner() { return '<div class="spinner"></div>'; }
 export function emptyState(icon, text) {
   return `<div class="empty"><div class="em-ico">${icon}</div><p>${escapeHtml(text)}</p></div>`;
+}
+
+// ---------- T.C. Kimlik Numarası Doğrulama ----------
+export function isValidTCKN(val) {
+  const s = String(val == null ? '' : val).trim();
+  if (!/^[1-9][0-9]{10}$/.test(s)) return false;
+  const d = s.split('').map(Number);
+  const T = d[0] + d[2] + d[4] + d[6] + d[8];
+  const C = d[1] + d[3] + d[5] + d[7];
+  const d10 = (((7 * T) - C) % 10 + 10) % 10;
+  if (d[9] !== d10) return false;
+  const sum10 = T + C + d[9];
+  const d11 = sum10 % 10;
+  return d[10] === d11;
 }

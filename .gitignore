@@ -3,6 +3,9 @@ node_modules/
 
 # Real database — contains guest/payment data, never commit to public repo
 data/db.json
+data/db.backup-*.json
+data/db.corrupt-*.json
+~$*
 
 # Logs
 *.log

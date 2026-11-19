@@ -4,7 +4,14 @@ import {
   escapeHtml, money, fmtDate, fmtDateShort, toast, openModal, confirmDialog, spinner, emptyState, initials,
 } from '../ui.js';
 
-const PAY_METHODS = { cash: 'Nakit', card: 'Kredi Kartı', transfer: 'Havale/EFT', vpos: 'Sanal POS' };
+const PAY_METHODS = { cash: 'Nakit', card: 'Kredi Kartı', transfer: 'Havale/EFT', vpos: 'Mail Order / Sanal POS' };
+
+function curFmt(n, cur) {
+  const v = Number(n) || 0;
+  if (cur === 'TRY' || !cur) return money(v);
+  const sym = cur === 'EUR' ? '€' : cur === 'USD' ? '$' : (cur + ' ');
+  return sym + v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 let tab = 'folios';
 
@@ -37,17 +44,19 @@ async function renderFolios(ctx, el) {
   const folios = await Promise.all(list.map((r) => api.get(`/api/reservations/${r.id}/folio`).catch(() => null)));
 
   el.innerHTML = `<div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Misafir</th><th>Oda</th><th>Rezervasyon</th><th class="t-right">Tutar</th><th class="t-right">Ödenen</th><th class="t-right">Bakiye</th><th></th></tr></thead>
+    <thead><tr><th>Misafir</th><th>Oda</th><th>Rezervasyon</th><th class="t-right">Günlük</th><th class="t-right">Toplam</th><th class="t-right">Ödenen</th><th class="t-right">Bakiye</th><th></th></tr></thead>
     <tbody>${list.map((r, i) => {
       const f = folios[i];
       const bal = f ? f.balance : 0;
+      const cur = r.currency || 'TRY';
       return `<tr data-res="${r.id}" style="cursor:pointer">
         <td class="t-strong">${escapeHtml(r.guestName)}</td>
         <td>${r.roomNumber ? '<b>' + escapeHtml(r.roomNumber) + '</b>' : '—'}</td>
         <td class="t-code">${escapeHtml(r.code)}</td>
-        <td class="t-right">${f ? money(f.chargeTotal) : '—'}</td>
-        <td class="t-right">${f ? money(f.paidTotal) : '—'}</td>
-        <td class="t-right"><b style="color:${bal > 1 ? 'var(--danger)' : 'var(--ok)'}">${f ? money(bal) : '—'}</b></td>
+        <td class="t-right">${curFmt(r.ratePerNight || 0, cur)}</td>
+        <td class="t-right">${f ? curFmt(f.chargeTotal, cur) : '—'}</td>
+        <td class="t-right">${f ? curFmt(f.paidTotal, cur) : '—'}</td>
+        <td class="t-right"><b style="color:${bal > 1 ? 'var(--danger)' : 'var(--ok)'}">${f ? curFmt(bal, cur) : '—'}</b></td>
         <td class="t-right"><button class="btn btn-sm btn-gold" data-open="${r.id}">Folio</button></td>
       </tr>`;
     }).join('')}</tbody></table></div>`;
@@ -65,14 +74,12 @@ async function renderInvoices(el) {
   catch (e) { el.innerHTML = emptyState('⚠️', e.message); return; }
   if (!list.length) { el.innerHTML = emptyState('📄', 'Henüz fatura kesilmemiş.'); return; }
   el.innerHTML = `<div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Fatura No</th><th>Tür</th><th>Müşteri</th><th>VKN/TCKN</th><th class="t-right">Matrah</th><th class="t-right">KDV</th><th class="t-right">Genel Toplam</th><th>e-Belge</th><th>Tarih</th></tr></thead>
+    <thead><tr><th>Fatura No</th><th>Tür</th><th>Müşteri</th><th>VKN/TCKN</th><th class="t-right">Toplam Tutar</th><th>e-Belge</th><th>Tarih</th></tr></thead>
     <tbody>${list.map((v) => `<tr>
       <td class="t-code">${escapeHtml(v.number)}</td>
       <td>${v.type === 'efatura' ? '<span class="badge b-info">e-Fatura</span>' : '<span class="badge b-navy">e-Arşiv</span>'}</td>
       <td>${escapeHtml(v.customerName || '—')}</td>
       <td class="mono">${escapeHtml(v.taxNumber || '—')}</td>
-      <td class="t-right">${money(v.net)}</td>
-      <td class="t-right">${money(v.kdv)}</td>
       <td class="t-right t-strong">${money(v.grandTotal)}</td>
       <td>${v.efaturaStatus === 'sent' ? '<span class="badge b-ok">Gönderildi</span>' : '<span class="badge b-warn">' + escapeHtml(v.efaturaStatus) + '</span>'}</td>
       <td class="muted">${fmtDate((v.issuedAt || '').slice(0, 10))}</td>
@@ -81,36 +88,44 @@ async function renderInvoices(el) {
 
 // ---------- Folio modalı (dışarıdan da kullanılır) ----------
 export async function openFolioModal(ctx, reservationId) {
-  let sum, resv;
+  let sum, resv, currencies = [];
   try {
-    resv = await api.reservation(reservationId);
-    sum = await api.get(`/api/reservations/${reservationId}/folio`);
+    [resv, sum, currencies] = await Promise.all([
+      api.reservation(reservationId),
+      api.get(`/api/reservations/${reservationId}/folio`),
+      api.get('/api/currency').catch(() => []),
+    ]);
   } catch (e) { toast(e.message, 'err'); return; }
 
   const m = openModal({ title: `Folio · ${escapeHtml(resv.code)}`, body: spinner(), footer: '<button class="btn btn-ghost" data-close>Kapat</button>', wide: true });
   renderBody();
 
   function renderBody() {
-    m.body.innerHTML = folioHtml(resv, sum);
+    m.body.innerHTML = folioHtml(resv, sum, currencies);
     m.body.querySelectorAll('[data-act]').forEach((btn) => btn.addEventListener('click', () => onAction(btn.dataset.act, btn.dataset.item)));
   }
 
   async function refresh() {
     sum = await api.get(`/api/reservations/${reservationId}/folio`);
-    renderBody();
-    if (ctx && ctx.refreshBadges) { /* opsiyonel */ }
+    renderBody(); if (ctx && ctx.reload) ctx.reload();
   }
 
   function onAction(act, itemId) {
-    if (act === 'extra') addExtra(sum.folio.id, refresh);
-    else if (act === 'payment') addPayment(sum.folio.id, sum.balance, refresh);
+    if (act === 'extra') addExtra(sum.folio.id, resv.currency, refresh);
+    else if (act === 'payment') addPayment(sum.folio.id, sum.balance, resv.currency, currencies, refresh);
     else if (act === 'invoice') createInvoice(sum.folio.id, resv, refresh);
     else if (act === 'reverse') doReverse(sum.folio.id, itemId, refresh);
   }
 }
 
-function folioHtml(resv, sum) {
+function folioHtml(resv, sum, currencies = []) {
+  const cur = resv.currency || 'TRY';
+  const isFx = cur === 'EUR' || cur === 'USD';
+  const fxObj = isFx ? currencies.find((c) => c.code === cur) : null;
+  const fxRate = fxObj ? Number(fxObj.forexSelling) : null;
   const items = sum.items.filter((i) => !i.reversed || i.gross < 0);
+  const roomTotal = sum.items.filter((i) => i.type === 'room').reduce((s, i) => s + i.gross, 0);
+  const extraTotal = sum.items.filter((i) => i.type === 'extra').reduce((s, i) => s + i.gross, 0);
   return `
     <div class="flex between wrap mb">
       <div class="flex"><div class="mr-av">${initials(resv.guestName)}</div>
@@ -123,12 +138,11 @@ function folioHtml(resv, sum) {
       </div>
     </div>
     <div class="table-wrap"><table class="tbl">
-      <thead><tr><th>Tarih</th><th>Açıklama</th><th class="t-right">KDV</th><th class="t-right">Tutar</th><th></th></tr></thead>
+      <thead><tr><th>Tarih</th><th>Açıklama</th><th class="t-right">Tutar</th><th></th></tr></thead>
       <tbody>${items.map((i) => `<tr ${i.gross < 0 ? 'style="color:var(--danger)"' : ''}>
         <td class="muted">${fmtDateShort(i.date)}</td>
         <td>${escapeHtml(i.description)}${i.category ? ` <span class="muted" style="font-size:.74rem">· ${escapeHtml(i.category)}</span>` : ''}</td>
-        <td class="t-right muted">${i.kdvRate ? '%' + i.kdvRate : '—'}</td>
-        <td class="t-right t-strong">${money(i.gross)}</td>
+        <td class="t-right t-strong">${curFmt(i.gross, cur)}</td>
         <td class="t-right">${(i.type === 'extra' && i.gross > 0) ? `<button class="btn btn-sm btn-danger" data-act="reverse" data-item="${i.id}">İptal</button>` : ''}</td>
       </tr>`).join('')}</tbody>
     </table></div>
@@ -136,28 +150,34 @@ function folioHtml(resv, sum) {
     <div class="grid cols-2 mt">
       <div>
         <h4 style="font-size:.9rem;margin-bottom:8px">Tahsilatlar</h4>
-        ${sum.payments.length ? `<div class="mini-list">${sum.payments.map((p) => `<div class="mini-row" style="padding:7px 0"><div class="mr-main"><strong>${money(p.amount)}</strong><span>${PAY_METHODS[p.method] || p.method} · ${fmtDateShort(p.date)}</span></div></div>`).join('')}</div>` : '<p class="muted" style="font-size:.84rem">Tahsilat yok.</p>'}
+        ${sum.payments.length ? `<div class="mini-list">${sum.payments.map((p) => `<div class="mini-row" style="padding:7px 0"><div class="mr-main"><strong>${curFmt(p.amount, cur)}</strong><span>${PAY_METHODS[p.method] || p.method} · ${fmtDateShort(p.date)}</span></div></div>`).join('')}</div>` : '<p class="muted" style="font-size:.84rem">Tahsilat yok.</p>'}
       </div>
       <div>
-        <div class="folio-total-row"><span class="muted">Matrah (KDV hariç)</span><b>${money(sum.netTotal)}</b></div>
-        ${sum.kdvBreakdown.map((k) => `<div class="folio-total-row"><span class="muted">KDV %${k.rate}</span><span>${money(k.kdv)}</span></div>`).join('')}
-        <div class="folio-total-row"><span class="muted">Konaklama Vergisi</span><span>${money(sum.accommodationTax)}</span></div>
-        <div class="folio-total-row grand"><span>Toplam</span><span>${money(sum.chargeTotal)}</span></div>
-        <div class="folio-total-row"><span class="muted">Tahsil edilen</span><span style="color:var(--ok)">${money(sum.paidTotal)}</span></div>
-        <div class="folio-total-row"><span>Kalan Bakiye</span><span class="folio-bal ${sum.balance > 1 ? 'pos' : 'zero'}">${money(sum.balance)}</span></div>
+        <div class="folio-total-row"><span class="muted">Günlük Fiyat</span><b>${curFmt(resv.ratePerNight || 0, cur)}</b></div>
+        <div class="folio-total-row"><span class="muted">Kalacağı Gün</span><b>${resv.nights || 1} gece</b></div>
+        <div class="folio-total-row"><span class="muted">Toplam Oda Fiyatı</span><b>${curFmt(roomTotal, cur)}</b></div>
+        ${extraTotal ? `<div class="folio-total-row"><span class="muted">Ekstra Harcamalar</span><span>${curFmt(extraTotal, cur)}</span></div>` : ''}
+        <div class="folio-total-row grand"><span>Toplam Fiyat</span><span>${curFmt(sum.chargeTotal, cur)}</span></div>
+        <div class="folio-total-row"><span class="muted">Ödenen Miktar</span><span style="color:var(--ok)">${curFmt(sum.paidTotal, cur)}</span></div>
+        <div class="folio-total-row"><span>Kalan Bakiye</span><span class="folio-bal ${sum.balance > 1 ? 'pos' : 'zero'}">${curFmt(sum.balance, cur)}</span></div>
+        ${isFx && fxRate ? `
+          <div class="folio-total-row" style="margin-top:6px"><span class="muted">1 ${cur} Kuru</span><span>${money(fxRate)}</span></div>
+          <div class="folio-total-row"><span class="muted">Toplam (TRY)</span><b>${money(sum.chargeTotal * fxRate)}</b></div>
+          <div class="folio-total-row"><span class="muted">Kalan (TRY)</span><b>${money(sum.balance * fxRate)}</b></div>
+        ` : ''}
       </div>
     </div>`;
 }
 
-function addExtra(folioId, onDone) {
+function addExtra(folioId, cur = 'TRY', onDone) {
+  const sym = cur === 'EUR' ? '€' : cur === 'USD' ? '$' : '₺';
   const body = `
     <div class="field"><label>Açıklama</label><input class="input" id="exDesc" placeholder="Minibar, Restoran, Spa…"></div>
     <div class="form-row-3">
       <div class="field"><label>Kategori</label><select class="select" id="exCat"><option>Restoran</option><option>Minibar</option><option>Spa</option><option>Çamaşırhane</option><option>Telefon</option><option>Diğer</option></select></div>
       <div class="field"><label>Adet</label><input class="input" type="number" id="exQty" value="1" min="1"></div>
-      <div class="field"><label>Birim Fiyat (₺)</label><input class="input" type="number" id="exPrice" min="0" placeholder="0"></div>
-    </div>
-    <div class="field"><label>KDV Oranı (%)</label><select class="select" id="exKdv"><option value="10">%10</option><option value="20">%20</option><option value="1">%1</option><option value="0">%0</option></select></div>`;
+      <div class="field"><label>Birim Fiyat (${sym})</label><input class="input" type="number" id="exPrice" min="0" placeholder="0"></div>
+    </div>`;
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Vazgeç</button><button class="btn btn-gold" id="saveEx">Ekle</button>`;
   const m = openModal({ title: 'Ekstra Harcama', body, footer: foot });
@@ -166,20 +186,26 @@ function addExtra(folioId, onDone) {
     const price = Number(m.el.querySelector('#exPrice').value);
     if (!desc || !price) { toast('Açıklama ve tutar girin.', 'err'); return; }
     try {
-      await api.post(`/api/folios/${folioId}/charge`, { description: desc, category: m.el.querySelector('#exCat').value, qty: Number(m.el.querySelector('#exQty').value) || 1, unitPrice: price, kdvRate: Number(m.el.querySelector('#exKdv').value) });
+      await api.post(`/api/folios/${folioId}/charge`, { description: desc, category: m.el.querySelector('#exCat').value, qty: Number(m.el.querySelector('#exQty').value) || 1, unitPrice: price, kdvRate: 0 });
       toast('Ekstra eklendi.', 'ok'); m.close(); onDone();
     } catch (e) { toast(e.message, 'err'); }
   });
 }
 
-function addPayment(folioId, balance, onDone) {
+function addPayment(folioId, balance, cur = 'TRY', currencies = [], onDone) {
+  const sym = cur === 'EUR' ? '€' : cur === 'USD' ? '$' : '₺';
+  const isFx = cur === 'EUR' || cur === 'USD';
+  const fxObj = isFx ? currencies.find((c) => c.code === cur) : null;
+  const fxRate = fxObj ? Number(fxObj.forexSelling) : null;
   const body = `
     <div class="field"><label>Ödeme Yöntemi</label>
       <div class="pay-method">
         ${Object.entries(PAY_METHODS).map(([k, v], i) => `<label><input type="radio" name="pm" value="${k}" ${i === 0 ? 'checked' : ''}><span>${v}</span></label>`).join('')}
       </div>
     </div>
-    <div class="field"><label>Tutar (₺)</label><input class="input" type="number" id="payAmt" min="0" value="${balance > 0 ? Math.round(balance) : ''}" placeholder="0"></div>
+    <div class="field"><label>Tutar (${sym})</label><input class="input" type="number" id="payAmt" min="0" value="${balance > 0 ? Math.round(balance) : ''}" placeholder="0">
+      ${isFx && fxRate && balance > 0 ? `<div class="hint" style="margin-top:4px">TRY Karşılığı: <b>${money(balance * fxRate)}</b> (Kur: ${money(fxRate)})</div>` : ''}
+    </div>
     <div class="field"><label>Referans / Not</label><input class="input" id="payRef" placeholder="İşlem no, açıklama…"></div>`;
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Vazgeç</button><button class="btn btn-primary" id="savePay">Tahsilat Al</button>`;

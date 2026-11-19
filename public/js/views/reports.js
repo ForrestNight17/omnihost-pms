@@ -268,7 +268,7 @@ async function renderStaysTab(el, ctx) {
       <div class="stat-tile"><div class="st-l">Toplam Kayıt</div><div class="st-v">${data.totalCount}</div></div>
       <div class="stat-tile"><div class="st-l">İçeride (Otelde)</div><div class="st-v" style="color:var(--ok)">${data.inHouseCount} oda</div></div>
       <div class="stat-tile"><div class="st-l">Bugün Ayrılan</div><div class="st-v" style="color:var(--info)">${data.departedCount} oda</div></div>
-      <div class="stat-tile"><div class="st-l">Günlük Oda Üretimi</div><div class="st-v">${money(data.totalDailyRevenue)}</div></div>
+      <div class="stat-tile"><div class="st-l">Günlük Ciro (Tahsilat)</div><div class="st-v">${money(data.totalDailyRevenue)}</div></div>
       <div class="stat-tile"><div class="st-l">Kalan Açık Bakiye</div><div class="st-v" style="color:${data.totalBalance > 0 ? 'var(--danger)' : 'var(--ok)'}">${money(data.totalBalance)}</div></div>
     </div>
 

@@ -166,6 +166,7 @@ export async function render(container, ctx) {
       if (action === 'edit') { const r = await api.reservation(id); openReservationModal(ctx, { reservation: r, onSaved: refresh }); }
       else if (action === 'checkin') { openStayModal(ctx, { mode: 'checkin', reservationId: id }); }
       else if (action === 'checkout') { doCheckout(ctx, id, refresh); }
+      else if (action === 'folio') { openFolioModal(ctx, id); }
       else if (action === 'cancel') { doCancel(ctx, id, refresh); }
       return;
     }
@@ -181,7 +182,7 @@ function rowActions(r) {
   // Giriş yalnızca giriş tarihi gelmiş (iş günü ve öncesi) rezervasyonlarda
   if (r.status === 'confirmed' && r.checkIn <= bizDate) btns.push(`<button class="btn btn-sm btn-gold" data-action="checkin">Giriş</button>`);
   if (r.status === 'checked_in') btns.push(`<button class="btn btn-sm btn-primary" data-action="checkout">Çıkış</button>`);
-  if (r.status === 'confirmed') btns.push(`<button class="btn btn-sm btn-ghost" data-action="edit">Düzenle</button>`);
+  if (r.status === 'confirmed') { btns.push(`<button class="btn btn-sm btn-primary" data-action="folio">Ödeme / Folio</button>`); btns.push(`<button class="btn btn-sm btn-ghost" data-action="edit">Düzenle</button>`); }
   return btns.join('');
 }
 
@@ -191,7 +192,7 @@ export function openDetailModal(ctx, r, onChange) {
   const actions = [];
   if (r.status === 'confirmed' && r.checkIn <= bizDate) actions.push('<button class="btn btn-gold" data-do="checkin">Check-in</button>');
   if (r.status === 'checked_in') actions.push('<button class="btn btn-primary" data-do="checkout">Check-out</button>');
-  if (r.status === 'checked_in' || r.status === 'checked_out') actions.push('<button class="btn btn-ghost" data-do="folio">Folio</button>');
+  if (r.status === 'confirmed' || r.status === 'checked_in' || r.status === 'checked_out') actions.push('<button class="btn btn-ghost" data-do="folio">Ödeme / Folio</button>');
   if (r.status === 'confirmed' || r.status === 'checked_in') actions.push('<button class="btn btn-ghost" data-do="edit">Düzenle</button>');
   if (r.status === 'confirmed') actions.push('<button class="btn btn-danger" data-do="cancel">İptal Et</button>');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Kapat</button>${actions.join('')}`;
@@ -264,6 +265,17 @@ export function openReservationModal(ctx, { reservation = null, onSaved, default
     <div class="form-row">
       <div class="field"><label>Gecelik Fiyat (₺) <span class="hint">(manuel)</span></label><input class="input" type="number" min="0" name="ratePerNight" id="ratePerNight" value="${curRate}" placeholder="Manuel fiyat giriniz"></div>
       <div class="field"><label>Toplam</label><input class="input" id="totalPreview" readonly style="background:var(--ivory);font-weight:700"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Alınan Kapora / Ön Ödeme (₺) <span class="hint">(opsiyonel)</span></label><input class="input" type="number" min="0" name="depositAmount" id="depositAmount" value="" placeholder="Ön ödeme / kapora alındıysa tutar girin"></div>
+      <div class="field"><label>Kapora Ödeme Tipi</label>
+        <select class="select" name="depositMethod" id="depositMethod">
+          <option value="cash">Nakit</option>
+          <option value="card">Kredi Kartı</option>
+          <option value="transfer">Havale / EFT</option>
+          <option value="vpos">Mail Order / Sanal POS</option>
+        </select>
+      </div>
     </div>
     <div id="availInfo" style="font-size:.84rem;margin-bottom:10px"></div>
     <label id="overrideWrap" class="flex gap-sm" style="display:none;font-size:.82rem;margin-bottom:10px"><input type="checkbox" id="overrideAvail"> Müsaitlik uyarısına rağmen oluştur</label>
@@ -341,10 +353,18 @@ export function openReservationModal(ctx, { reservation = null, onSaved, default
       ratePerNight: Number(f.ratePerNight.value) || 0,
       notes: f.notes.value,
     };
+    const depAmt = Number(f.depositAmount && f.depositAmount.value) || 0;
+    const depMethod = (f.depositMethod && f.depositMethod.value) || 'cash';
     if (isEdit) {
       btn.disabled = true;
-      try { await api.put(`/api/reservations/${reservation.id}`, payload); toast('Rezervasyon güncellendi.', 'ok'); m.close(); onSaved && onSaved(); }
-      catch (e) { toast(e.message, 'err'); btn.disabled = false; }
+      try {
+        await api.put(`/api/reservations/${reservation.id}`, payload);
+        if (depAmt > 0) {
+          const fol = await api.get(`/api/reservations/${reservation.id}/folio`);
+          await api.post(`/api/folios/${fol.folio.id}/payment`, { method: depMethod, amount: depAmt, reference: 'Rezervasyon Kaporası / Ön Ödeme' });
+        }
+        toast('Rezervasyon güncellendi.', 'ok'); m.close(); onSaved && onSaved(); ctx.refreshBadges && ctx.refreshBadges();
+      } catch (e) { toast(e.message, 'err'); btn.disabled = false; }
     } else {
       // Rezervasyonda yalnızca ad soyad (+ opsiyonel telefon). Kimlik bilgisi check-in'de alınır.
       if (!f.guestName.value.trim()) { toast('Misafir adı girin.', 'err'); return; }
@@ -356,8 +376,14 @@ export function openReservationModal(ctx, { reservation = null, onSaved, default
         payload.overrideAvailability = true;
       }
       btn.disabled = true;
-      try { await api.post('/api/reservations', payload); toast('Rezervasyon oluşturuldu.', 'ok'); m.close(); onSaved && onSaved(); ctx.refreshBadges(); }
-      catch (e) { toast(e.message, 'err'); btn.disabled = false; }
+      try {
+        const created = await api.post('/api/reservations', payload);
+        if (depAmt > 0 && created && created.id) {
+          const fol = await api.get(`/api/reservations/${created.id}/folio`);
+          await api.post(`/api/folios/${fol.folio.id}/payment`, { method: depMethod, amount: depAmt, reference: 'Rezervasyon Kaporası / Ön Ödeme' });
+        }
+        toast('Rezervasyon oluşturuldu.', 'ok'); m.close(); onSaved && onSaved(); ctx.refreshBadges();
+      } catch (e) { toast(e.message, 'err'); btn.disabled = false; }
     }
   });
 }

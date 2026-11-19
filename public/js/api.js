@@ -1,7 +1,14 @@
 // REST API istemcisi + kimlik doğrulama (token) yönetimi.
 const urlToken = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('token') : null;
 let authToken = urlToken || (typeof localStorage !== 'undefined' ? localStorage.getItem('pms_token') || '' : '');
-if (urlToken && typeof localStorage !== 'undefined') localStorage.setItem('pms_token', urlToken);
+if (urlToken && typeof localStorage !== 'undefined') {
+  localStorage.setItem('pms_token', urlToken);
+  if (typeof history !== 'undefined' && history.replaceState) {
+    const cleanUrl = new URL(location.href);
+    cleanUrl.searchParams.delete('token');
+    history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+  }
+}
 
 export function setToken(t) {
   authToken = t || '';

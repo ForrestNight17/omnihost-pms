@@ -29,12 +29,12 @@ function matches(room) {
 }
 
 function durumBadge(room) {
-  if (room.occupied) return '<span class="badge b-navy">Dolu</span>';
-  if (room.reserved) return '<span class="badge b-info">Rezerve</span>';
-  return '<span class="badge b-ok">Boş</span>';
+  if (room.occupied) return '<span class="badge b-danger">Dolu</span>';
+  if (room.reserved) return '<span class="badge b-ok">Rezerve</span>';
+  return '<span class="badge b-info">Boş</span>';
 }
 function temizBadge(room) {
-  return room.housekeeping === 'dirty' ? '<span class="badge b-warn">Kirli</span>' : '<span class="badge b-ok">Temiz</span>';
+  return room.housekeeping === 'dirty' ? '<span class="badge b-brown">Kirli</span>' : '<span class="badge b-ok">Temiz</span>';
 }
 
 function recount(rooms, counts) {
@@ -115,7 +115,7 @@ function rowHtml(room) {
     <td class="t-strong">${escapeHtml(room.number)}</td>
     <td class="muted">${room.block || '—'} · ${room.floor}. kat</td>
     <td>${escapeHtml(room.typeName)}</td>
-    <td>${durumBadge(room)}${room.outOfOrder ? ' <span class="badge b-danger">Arızalı</span>' : ''}</td>
+    <td>${durumBadge(room)}${room.outOfOrder ? ' <span class="badge b-muted">Arızalı</span>' : ''}</td>
     <td>${temizBadge(room)}</td>
     <td>${active ? escapeHtml(room.guestName || '—') + (room.checkOut ? ` <span class="muted">· çıkış ${fmtDateShort(room.checkOut)}</span>` : '') : '<span class="muted">Boş oda</span>'}</td>
     <td class="t-right">${room.occupied

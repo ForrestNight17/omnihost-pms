@@ -1,6 +1,6 @@
 // KBS — Kimlik Bildirim Sistemi (EGM/Jandarma) bildirimleri.
 import { api } from '../api.js';
-import { escapeHtml, fmtDate, fmtDateShort, relTime, badge, toast, openModal, spinner, emptyState, initials } from '../ui.js';
+import { escapeHtml, fmtDate, fmtDateShort, relTime, badge, toast, openModal, spinner, emptyState, initials, isValidTCKN } from '../ui.js';
 
 export async function render(container, ctx) {
   container.innerHTML = spinner();
@@ -66,7 +66,7 @@ export function openKbsModal(ctx, reservation, type) {
       <div class="field"><label>Kimlik Türü</label>
         <select class="select" id="kType"><option value="tc" ${isTc ? 'selected' : ''}>T.C. Kimlik</option><option value="passport" ${!isTc ? 'selected' : ''}>Pasaport</option></select>
       </div>
-      <div class="field"><label>Kimlik / Pasaport No</label><input class="input" id="kNo" placeholder="${isTc ? '11 haneli TC no' : 'Pasaport no'}"></div>
+      <div class="field"><label>Kimlik / Pasaport No</label><input class="input" id="kNo" placeholder="${isTc ? '11 haneli TC no' : 'Pasaport no'}" autocomplete="off"><div id="kNoErr" style="color:var(--danger);font-size:.75rem;margin-top:4px;display:none">TC kimlik numarası hatalı</div></div>
     </div>
     <div class="form-row">
       <div class="field"><label>Doğum Tarihi</label><input class="input" type="date" id="kBirth"></div>
@@ -76,9 +76,34 @@ export function openKbsModal(ctx, reservation, type) {
   const foot = document.createElement('div');
   foot.innerHTML = `<button class="btn btn-ghost" data-close>Vazgeç</button><button class="btn btn-gold" id="sendKbs">KBS'ye Bildir</button>`;
   const m = openModal({ title: 'KBS Bildirimi', body, footer: foot });
+  const kType = m.el.querySelector('#kType'), kNo = m.el.querySelector('#kNo'), kNoErr = m.el.querySelector('#kNoErr');
+  const setKbsTcErr = (show) => {
+    if (kNoErr) kNoErr.style.display = show ? 'block' : 'none';
+    if (kNo) kNo.style.borderColor = show ? 'var(--danger)' : '';
+  };
+  const checkKbsTc = (strict = false) => {
+    if (kType.value !== 'tc') { setKbsTcErr(false); return true; }
+    const v = kNo.value.trim();
+    if (!v) { setKbsTcErr(strict); return !strict; }
+    if (strict || v.length >= 11 || /[^0-9]/.test(v) || v.startsWith('0')) {
+      const ok = isValidTCKN(v);
+      setKbsTcErr(!ok);
+      return ok;
+    }
+    setKbsTcErr(false);
+    return false;
+  };
+  kNo.addEventListener('input', () => checkKbsTc(false));
+  kNo.addEventListener('blur', () => { if (kNo.value.trim()) checkKbsTc(true); });
+  kType.addEventListener('change', () => {
+    kNo.placeholder = kType.value === 'tc' ? '11 haneli TC no' : 'Pasaport no';
+    checkKbsTc(false);
+  });
   foot.querySelector('#sendKbs').addEventListener('click', async () => {
-    const idNumber = m.el.querySelector('#kNo').value.trim();
-    if (!idNumber) { toast('Kimlik/pasaport no girin.', 'err'); return; }
+    const idNumber = kNo.value.trim();
+    if (kType.value === 'tc') {
+      if (!isValidTCKN(idNumber)) { setKbsTcErr(true); kNo.focus(); return; }
+    } else if (!idNumber) { toast('Kimlik/pasaport no girin.', 'err'); return; }
     try {
       const out = await api.post(`/api/kbs/${type}/${reservation.id}`, {
         idType: m.el.querySelector('#kType').value, idNumber,

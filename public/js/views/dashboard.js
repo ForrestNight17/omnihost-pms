@@ -45,12 +45,13 @@ export async function render(container, ctx) {
 
   const r = d.rooms;
   const k = d.kpis;
-  const rsx = d.roomStatus || { dolu: r.occupied, bos: r.available, rezerve: 0, arizali: r.outOfOrder };
+  const rsx = d.roomStatus || { dolu: r.occupied, bos: r.available, rezerve: 0, kirli: r.dirty || 0, arizali: r.outOfOrder };
   const slices = [
-    { label: 'Dolu', value: rsx.dolu, color: 'var(--status-dolu)' },
-    { label: 'Boş', value: rsx.bos, color: 'var(--ok)' },
-    { label: 'Rezerve', value: rsx.rezerve, color: 'var(--gold)' },
-    { label: 'Arızalı', value: rsx.arizali, color: 'var(--danger)' },
+    { label: 'Dolu', value: rsx.dolu, color: 'var(--danger)' },
+    { label: 'Boş', value: rsx.bos, color: 'var(--info)' },
+    { label: 'Rezerve', value: rsx.rezerve, color: 'var(--ok)' },
+    { label: 'Kirli', value: rsx.kirli != null ? rsx.kirli : (r.dirty || 0), color: 'var(--status-kirli)' },
+    { label: 'Arızalı', value: rsx.arizali, color: 'var(--status-arizali)' },
   ];
   const periods = d.channelPeriods || { day: [], week: [], month: d.channelBreakdown || [] };
   let curPeriod = 'month';
@@ -79,7 +80,7 @@ export async function render(container, ctx) {
 
     <div class="dash-top mb">
       <div class="kpi kpi-center"><div class="kpi-label">Doluluk Oranı</div><div class="kpi-value">${k.occupancyPct}<small>%</small></div><div class="kpi-foot">${r.occupied}/${r.sellable} oda dolu</div></div>
-      <div class="kpi kpi-center accent-navy"><div class="kpi-label">Bu Geceki Oda Geliri</div><div class="kpi-value" style="font-size:1.5rem">${money(k.roomRevenueTonight)}</div><div class="kpi-foot">konaklayan misafirler</div></div>
+      <div class="kpi kpi-center accent-navy"><div class="kpi-label">Günlük Ciro</div><div class="kpi-value" style="font-size:1.5rem">${money(k.roomRevenueTonight)}</div><div class="kpi-foot">bugün alınan ödemeler</div></div>
       <div class="card">
         <div class="card-head"><h3>Oda Durumu</h3><span class="card-sub">${r.total} oda</span></div>
         <div class="card-pad">

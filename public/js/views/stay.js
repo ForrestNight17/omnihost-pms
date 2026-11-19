@@ -4,10 +4,10 @@ import { api } from '../api.js';
 import { store } from '../store.js';
 import {
   escapeHtml, money, fmtDate, fmtDateShort, relTime, today, addDays, nights,
-  toast, openModal, confirmDialog, spinner,
+  toast, openModal, confirmDialog, spinner, isValidTCKN,
 } from '../ui.js';
 
-const PAY_METHODS = { cash: 'Nakit', card: 'Kredi Kartı', transfer: 'Havale/EFT', vpos: 'Sanal POS' };
+const PAY_METHODS = { cash: 'Nakit', card: 'Kredi Kartı', transfer: 'Havale/EFT', vpos: 'Mail Order / Sanal POS' };
 const GENDER = { E: 'Erkek', K: 'Kadın' };
 
 function curFmt(n, cur) {
@@ -18,6 +18,7 @@ function curFmt(n, cur) {
 }
 
 export async function openStayModal(ctx, opts = {}) {
+  const bizDate = ctx.businessDate || today();
   const st = {
     mode: opts.mode || (opts.reservationId ? 'edit' : 'new'),
     room: opts.room || null,
@@ -27,7 +28,7 @@ export async function openStayModal(ctx, opts = {}) {
     guests: [], reservation: null, folio: null, checkout: false,
   };
 
-  // Referans veriler
+  // Referans döviz verileri
   let currencies = [];
   try { currencies = await api.get('/api/currency'); } catch { /* yoksay */ }
   const eur = currencies.find((c) => c.code === 'EUR');
@@ -65,9 +66,10 @@ export async function openStayModal(ctx, opts = {}) {
         .sort((a, b) => (a.typeId === st.roomTypeId ? -1 : 1) - (b.typeId === st.roomTypeId ? -1 : 1) || a.number.localeCompare(b.number, undefined, { numeric: true }));
       const sameType = st.availableRooms.filter((r) => r.typeId === st.roomTypeId);
       st.room = (st.reservation.roomId && st.availableRooms.find((r) => r.id === st.reservation.roomId)) || sameType[0] || st.availableRooms[0] || null;
+      st.folio = await api.get(`/api/reservations/${st.reservationId}/folio`).catch(() => null);
     } else {
       // Walk-in (kapı): fiyat resepsiyon tarafından MANUEL girilir; otomatik fiyat gelmez.
-      st.checkIn = ctx.businessDate || today();
+      st.checkIn = bizDate;
       st.checkOut = addDays(st.checkIn, 1);
       st.ratePerNight = 0;
     }
@@ -91,7 +93,7 @@ export async function openStayModal(ctx, opts = {}) {
   }
 
   function guestPane() {
-    const n = nights(st.checkIn, st.checkOut);
+    const n = Math.max(1, nights(st.checkIn, st.checkOut));
     return `
       <div class="stay-form">
         <div class="sf-row">
@@ -99,7 +101,7 @@ export async function openStayModal(ctx, opts = {}) {
           <label>Oda Tipi</label><input class="input" value="${escapeHtml(st.room ? (st.room.typeName || store.roomTypeName(st.room.typeId)) : store.roomTypeName(st.roomTypeId))}" disabled>
         </div>
         <div class="sf-row">
-          <label>Çıkış Tarihi</label><input class="input" type="date" id="fCheckOut" value="${st.checkOut}" ${st.mode !== 'new' ? 'disabled' : ''}>
+          <label>Çıkış Tarihi</label><input class="input" type="date" id="fCheckOut" value="${st.checkOut}" min="${st.checkIn}">
           <label>Oda No</label>
           ${st.mode === 'checkin'
             ? `<select class="select" id="fRoomSel">${(st.availableRooms || []).length ? (st.availableRooms || []).map((r) => `<option value="${r.id}" ${st.room && st.room.id === r.id ? 'selected' : ''}>${r.number} · ${escapeHtml(r.typeName)}${r.typeId === st.roomTypeId ? '' : ' (farklı tip)'}</option>`).join('') : '<option value="">Boş oda yok</option>'}</select>`
@@ -107,7 +109,7 @@ export async function openStayModal(ctx, opts = {}) {
         </div>
         <div class="sf-row">
           <label>Gece Sayısı</label><input class="input" value="${n}" disabled>
-          <label>Gecelik Fiyat</label><input class="input" type="number" id="fRate" min="0" value="${st.ratePerNight ? Math.round(st.ratePerNight) : ''}" placeholder="${st.mode === 'new' ? 'Manuel giriniz' : ''}" ${st.mode !== 'new' ? 'disabled' : ''}>
+          <label>Günlük Fiyat</label><input class="input" type="number" id="fRate" min="0" value="${st.ratePerNight ? Math.round(st.ratePerNight) : ''}" placeholder="${st.mode === 'new' ? 'Manuel giriniz' : ''}" ${st.mode !== 'new' ? 'disabled' : ''}>
         </div>
         <div class="sf-row">
           <label>Para Birimi</label>
@@ -115,7 +117,7 @@ export async function openStayModal(ctx, opts = {}) {
           <label></label><span></span>
         </div>
         <div class="sf-row full">
-          <label>Notlar</label><input class="input" id="fNotes" value="${escapeHtml(st.notes)}" ${st.mode === 'edit' ? 'disabled' : ''} placeholder="İsteğe bağlı">
+          <label>Notlar</label><input class="input" id="fNotes" value="${escapeHtml(st.notes)}" placeholder="İsteğe bağlı">
         </div>
       </div>
       ${st.mode === 'checkin' ? '<p class="hint" style="margin-top:-8px;margin-bottom:14px">Bekleyen rezervasyonun girişi. Oda seçin ve <b>+ Ekle</b> ile konaklayan misafirleri girin.</p>' : ''}
@@ -150,55 +152,67 @@ export async function openStayModal(ctx, opts = {}) {
   function extraPane() {
     if (st.mode === 'new' || !st.folio) return '<div class="empty"><div class="em-ico">🧾</div><p>Harcama eklemek için önce girişi tamamlayın (Giriş Yap).</p></div>';
     const extras = st.folio.items.filter((i) => i.type === 'extra');
+    const cur = st.currency || (st.reservation && st.reservation.currency) || 'TRY';
     return `
       <div class="stay-section-title"><span>Ekstra Harcamalar / Adisyonlar</span>
         <span class="flex gap-sm"><button class="btn btn-sm btn-ghost" id="bfAdd">☕ Kahvaltı Ekle</button>
         <button class="btn btn-sm btn-gold" id="exAdd">+ Harcama Ekle</button></span></div>
       <div class="table-wrap"><table class="tbl">
-        <thead><tr><th>Tarih</th><th>Açıklama</th><th>Kategori</th><th class="t-right">KDV</th><th class="t-right">Tutar</th><th></th></tr></thead>
+        <thead><tr><th>Tarih</th><th>Açıklama</th><th>Kategori</th><th class="t-right">Tutar</th><th></th></tr></thead>
         <tbody>${extras.length ? extras.map((i) => `<tr ${i.gross < 0 ? 'style="color:var(--danger)"' : ''}>
           <td class="muted">${fmtDateShort(i.date)}</td><td>${escapeHtml(i.description)}</td><td class="muted">${escapeHtml(i.category || '')}</td>
-          <td class="t-right muted">%${i.kdvRate}</td><td class="t-right t-strong">${money(i.gross)}</td>
+          <td class="t-right t-strong">${curFmt(i.gross, cur)}</td>
           <td class="t-right">${i.gross > 0 ? `<button class="btn btn-sm btn-danger" data-exdel="${i.id}">İptal</button>` : ''}</td>
-        </tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:16px">Ekstra harcama yok.</td></tr>'}</tbody>
+        </tr>`).join('') : '<tr><td colspan="5" class="muted" style="text-align:center;padding:16px">Ekstra harcama yok.</td></tr>'}</tbody>
       </table></div>`;
   }
 
   function payPane() {
     if (st.mode === 'new' || !st.folio) return '<div class="empty"><div class="em-ico">💳</div><p>Ödeme almak için önce girişi tamamlayın (Giriş Yap).</p></div>';
     const f = st.folio;
-    const roomItems = f.items.filter((i) => i.type === 'room' || i.type === 'accommodation_tax');
-    const eurRate = eur ? eur.forexSelling : null;
-    const usdRate = usd ? usd.forexSelling : null;
+    const cur = st.currency || (st.reservation && st.reservation.currency) || 'TRY';
+    const isFx = cur === 'EUR' || cur === 'USD';
+    const fxObj = cur === 'EUR' ? eur : (cur === 'USD' ? usd : null);
+    const fxRate = fxObj ? Number(fxObj.forexSelling) : null;
+
+    const stayNights = Math.max(1, st.reservation ? st.reservation.nights : nights(st.checkIn, st.checkOut));
+    const dailyRate = Number(st.ratePerNight || (st.reservation && st.reservation.ratePerNight) || 0);
+    const roomItems = f.items.filter((i) => i.type === 'room');
+    const roomTotal = roomItems.reduce((s, i) => s + i.gross, 0);
+    const extraTotal = f.items.filter((i) => i.type === 'extra').reduce((s, i) => s + i.gross, 0);
+
     return `
       <div class="stay-pay">
         <div class="stay-pay-main">
           <div class="stay-section-title"><span>Konaklama Fiyatları</span></div>
           <div class="table-wrap"><table class="tbl">
-            <thead><tr><th>Tarih</th><th>Oda</th><th>Ürün / Hizmet</th><th class="t-right">Tutar</th></tr></thead>
-            <tbody>${roomItems.map((i) => `<tr><td class="muted">${fmtDateShort(i.date)}</td><td>${st.room ? escapeHtml(st.room.number) : ''}</td><td>${escapeHtml(i.description)}</td><td class="t-right t-strong">${money(i.gross)}</td></tr>`).join('')}</tbody>
+            <thead><tr><th>Tarih</th><th>Oda</th><th>Ürün / Hizmet</th><th class="t-right">Günlük Tutar</th></tr></thead>
+            <tbody>${roomItems.map((i) => `<tr><td class="muted">${fmtDateShort(i.date)}</td><td>${st.room ? escapeHtml(st.room.number) : ''}</td><td>${escapeHtml(i.description)}</td><td class="t-right t-strong">${curFmt(i.gross, cur)}</td></tr>`).join('')}</tbody>
           </table></div>
 
           <div class="stay-section-title" style="margin-top:14px"><span>Ödemeler</span>
             <button class="btn btn-sm btn-gold" id="payAdd">+ Tahsilat Ekle</button></div>
           <div class="table-wrap"><table class="tbl">
             <thead><tr><th>Tarih</th><th>Ödeme Tipi</th><th class="t-right">Tutar</th><th>Açıklama</th><th></th></tr></thead>
-            <tbody>${f.payments.length ? f.payments.map((p) => `<tr><td class="muted">${fmtDateShort(p.date)}</td><td>${PAY_METHODS[p.method] || p.method}</td><td class="t-right t-strong">${money(p.amount)}</td><td class="muted">${escapeHtml(p.reference || '')}</td><td class="t-right"><button class="btn btn-sm btn-danger" data-paydel="${p.id}">Sil</button></td></tr>`).join('') : '<tr><td colspan="5" class="muted" style="text-align:center;padding:14px">Tahsilat yok.</td></tr>'}</tbody>
+            <tbody>${f.payments.length ? f.payments.map((p) => `<tr><td class="muted">${fmtDateShort(p.date)}</td><td>${PAY_METHODS[p.method] || p.method}</td><td class="t-right t-strong">${curFmt(p.amount, cur)}</td><td class="muted">${escapeHtml(p.reference || '')}</td><td class="t-right"><button class="btn btn-sm btn-danger" data-paydel="${p.id}">Sil</button></td></tr>`).join('') : '<tr><td colspan="5" class="muted" style="text-align:center;padding:14px">Tahsilat yok.</td></tr>'}</tbody>
           </table></div>
         </div>
 
         <div class="hesap-ozeti">
           <div class="ho-title">Hesap Özeti</div>
-          <div class="ho-row"><span>Kalınan Gece</span><b>${st.reservation ? st.reservation.nights : nights(st.checkIn, st.checkOut)}</b></div>
-          <div class="ho-row"><span>Toplam Oda Fiyatı</span><b>${money(f.items.filter((i) => i.type === 'room').reduce((s, i) => s + i.gross, 0))}</b></div>
-          <div class="ho-row"><span>Konaklama Vergisi</span><b>${money(f.accommodationTax)}</b></div>
-          <div class="ho-row"><span>Ekstra Harcamalar</span><b>${money(f.items.filter((i) => i.type === 'extra').reduce((s, i) => s + i.gross, 0))}</b></div>
-          <div class="ho-row total"><span>Toplam</span><b>${money(f.chargeTotal)}</b></div>
-          <div class="ho-sub">Konaklama Kurları</div>
-          <div class="ho-row"><span>EUR</span><b>${eurRate ? money(eurRate) : '—'}${eurRate ? ` · ${curFmt(f.chargeTotal / eurRate, 'EUR')}` : ''}</b></div>
-          <div class="ho-row"><span>USD</span><b>${usdRate ? money(usdRate) : '—'}${usdRate ? ` · ${curFmt(f.chargeTotal / usdRate, 'USD')}` : ''}</b></div>
-          <div class="ho-row"><span>Toplam Ödemeler</span><b style="color:var(--ok)">${money(f.paidTotal)}</b></div>
-          <div class="ho-row balance"><span>Bakiye</span><b style="color:${f.balance > 1 ? 'var(--danger)' : 'var(--ok)'}">${money(f.balance)}</b></div>
+          <div class="ho-row"><span>Günlük Fiyat</span><b>${curFmt(dailyRate, cur)}</b></div>
+          <div class="ho-row"><span>Kalacağı Gün</span><b>${stayNights} gece</b></div>
+          <div class="ho-row"><span>Toplam Oda Fiyatı</span><b>${curFmt(roomTotal, cur)}</b></div>
+          ${extraTotal ? `<div class="ho-row"><span>Ekstra Harcamalar</span><b>${curFmt(extraTotal, cur)}</b></div>` : ''}
+          <div class="ho-row total"><span>Toplam Fiyat</span><b>${curFmt(f.chargeTotal, cur)}</b></div>
+          <div class="ho-row"><span>Ödenen Miktar</span><b style="color:var(--ok)">${curFmt(f.paidTotal, cur)}</b></div>
+          <div class="ho-row balance"><span>Kalan Bakiye</span><b style="color:${f.balance > 0.5 ? 'var(--danger)' : 'var(--ok)'}">${curFmt(f.balance, cur)}</b></div>
+          ${isFx ? `
+            <div class="ho-sub">TRY Karşılığı (1 ${cur} = ${fxRate ? money(fxRate) : '—'})</div>
+            <div class="ho-row"><span>Toplam (TRY)</span><b>${fxRate ? money(f.chargeTotal * fxRate) : '—'}</b></div>
+            <div class="ho-row"><span>Ödenen (TRY)</span><b style="color:var(--ok)">${fxRate ? money(f.paidTotal * fxRate) : '—'}</b></div>
+            <div class="ho-row"><span>Kalan (TRY)</span><b style="color:${f.balance > 0.5 ? 'var(--danger)' : 'var(--ok)'}">${fxRate ? money(f.balance * fxRate) : '—'}</b></div>
+          ` : ''}
           <label class="ho-checkout"><input type="checkbox" id="fCheckout" ${st.checkout ? 'checked' : ''}> <span>Çıkış yap (Check-out)</span></label>
         </div>
       </div>`;
@@ -227,16 +241,32 @@ export async function openStayModal(ctx, opts = {}) {
     });
 
     if (st.tab === 'guest') {
-      const upd = async (partial) => { Object.assign(st, partial); };
       const ci = m.body.querySelector('#fCheckIn'); const co = m.body.querySelector('#fCheckOut');
       const rt = m.body.querySelector('#fRate');
       const cu = m.body.querySelector('#fCur'); const nt = m.body.querySelector('#fNotes');
       if (st.mode === 'new') {
-        // Fiyat manuel; tarih değişince yalnız gece sayısı güncellenir (otomatik fiyat yok).
         ci && ci.addEventListener('change', () => { st.checkIn = ci.value; if (st.checkOut <= st.checkIn) st.checkOut = addDays(st.checkIn, 1); render(); });
         co && co.addEventListener('change', () => { st.checkOut = co.value; render(); });
         rt && rt.addEventListener('input', () => { st.ratePerNight = Number(rt.value) || 0; });
         cu && cu.addEventListener('change', () => { st.currency = cu.value; });
+      } else if (co) {
+        co.addEventListener('change', async () => {
+          if (co.value < st.checkIn) {
+            toast('Çıkış tarihi giriş tarihinden önce olamaz.', 'err');
+            co.value = st.checkOut;
+            return;
+          }
+          st.checkOut = co.value;
+          if (st.mode === 'edit' && st.reservationId) {
+            try {
+              st.reservation = await api.put(`/api/reservations/${st.reservationId}`, { checkOut: st.checkOut, notes: st.notes });
+              st.folio = await api.get(`/api/reservations/${st.reservationId}/folio`);
+              toast('Çıkış tarihi ve konaklama tutarı güncellendi.', 'ok');
+              ctx.reload();
+            } catch (e) { toast(e.message, 'err'); }
+          }
+          render();
+        });
       }
       nt && nt.addEventListener('input', () => { st.notes = nt.value; });
       const rs = m.body.querySelector('#fRoomSel');
@@ -256,13 +286,12 @@ export async function openStayModal(ctx, opts = {}) {
     if (st.tab === 'pay' && st.folio) {
       const pa = m.body.querySelector('#payAdd'); if (pa) pa.addEventListener('click', addPayment);
       m.body.querySelectorAll('[data-paydel]').forEach((b) => b.addEventListener('click', () => reversePayment(b.dataset.paydel)));
-      const chk = m.body.querySelector('#fCheckout'); if (chk) chk.addEventListener('change', () => { st.checkout = chk.checked; renderFooter(); });
+      const chk = m.body.querySelector('#fCheckout');
+      if (chk) chk.addEventListener('change', () => { st.checkout = chk.checked; renderFooter(); });
     }
   }
 
   // ---------- Misafir işlemleri ----------
-  // 'new' ve 'checkin' modunda misafirler YERELDİR (Giriş Yap ile toplu gönderilir);
-  // yalnızca 'edit' modunda API üzerinden anlık eklenir/çıkarılır.
   async function addGuest(g) {
     if (st.mode !== 'edit') { st.guests.push(g); st._sel = st.guests.length - 1; render(); }
     else { try { const up = await api.post(`/api/reservations/${st.reservationId}/guests`, g); st.guests = up.guests.map((x) => ({ ...x })); render(); toast('Misafir eklendi.', 'ok'); } catch (e) { toast(e.message, 'err'); } }
@@ -280,17 +309,18 @@ export async function openStayModal(ctx, opts = {}) {
   // ---------- Folio işlemleri ----------
   async function reload() { st.folio = await api.get(`/api/reservations/${st.reservationId}/folio`); render(); }
   function addExtra() {
+    const cur = st.currency || (st.reservation && st.reservation.currency) || 'TRY';
+    const sym = cur === 'EUR' ? '€' : cur === 'USD' ? '$' : '₺';
     guestlessForm({
       title: 'Ekstra Harcama',
       fields: `<div class="field"><label>Açıklama</label><input class="input" id="xD" placeholder="Restoran, Minibar, Spa…"></div>
         <div class="form-row-3"><div class="field"><label>Kategori</label><select class="select" id="xC"><option>Restoran</option><option>Minibar</option><option>Spa</option><option>Çamaşırhane</option><option>Telefon</option><option>Diğer</option></select></div>
         <div class="field"><label>Adet</label><input class="input" type="number" id="xQ" value="1" min="1"></div>
-        <div class="field"><label>Birim Fiyat (₺)</label><input class="input" type="number" id="xP" min="0"></div></div>
-        <div class="field"><label>KDV (%)</label><select class="select" id="xK"><option value="10">%10</option><option value="20">%20</option><option value="1">%1</option><option value="0">%0</option></select></div>`,
+        <div class="field"><label>Birim Fiyat (${sym})</label><input class="input" type="number" id="xP" min="0"></div></div>`,
       onOk: async (root) => {
         const desc = root.querySelector('#xD').value.trim(); const price = Number(root.querySelector('#xP').value);
         if (!desc || !price) { toast('Açıklama ve tutar girin.', 'err'); return false; }
-        await api.post(`/api/folios/${st.folio.folio.id}/charge`, { description: desc, category: root.querySelector('#xC').value, qty: Number(root.querySelector('#xQ').value) || 1, unitPrice: price, kdvRate: Number(root.querySelector('#xK').value) });
+        await api.post(`/api/folios/${st.folio.folio.id}/charge`, { description: desc, category: root.querySelector('#xC').value, qty: Number(root.querySelector('#xQ').value) || 1, unitPrice: price, kdvRate: 0 });
         await reload(); toast('Harcama eklendi.', 'ok'); return true;
       },
     });
@@ -299,34 +329,40 @@ export async function openStayModal(ctx, opts = {}) {
     let s = {};
     try { s = await api.settings(); } catch { /* varsayılan */ }
     const price = Number(s.breakfastPrice) || 350;
-    const kdv = Number(s.kdvFnb) || 10;
     const persons = st.reservation ? Math.max(1, (st.reservation.adults || 0) + (st.reservation.children || 0)) : Math.max(1, st.guests.length);
+    const cur = st.currency || (st.reservation && st.reservation.currency) || 'TRY';
+    const sym = cur === 'EUR' ? '€' : cur === 'USD' ? '$' : '₺';
     guestlessForm({
       title: 'Kahvaltı Ekle',
-      fields: `<div class="form-row-3">
+      fields: `<div class="form-row">
           <div class="field"><label>Adet (kişi)</label><input class="input" type="number" id="bQ" value="${persons}" min="1"></div>
-          <div class="field"><label>Birim Fiyat (₺)</label><input class="input" type="number" id="bP" value="${price}" min="0"></div>
-          <div class="field"><label>KDV (%)</label><input class="input" type="number" id="bK" value="${kdv}" min="0"></div></div>
+          <div class="field"><label>Birim Fiyat (${sym})</label><input class="input" type="number" id="bP" value="${price}" min="0"></div></div>
         <p class="hint">Kahvaltı folioya adisyon olarak eklenir. Adet/tutar düzenlenebilir.</p>`,
       onOk: async (root) => {
         const qty = Number(root.querySelector('#bQ').value) || 1;
         const unit = Number(root.querySelector('#bP').value);
         if (!unit) { toast('Fiyat girin.', 'err'); return false; }
-        await api.post(`/api/folios/${st.folio.folio.id}/charge`, { description: 'Kahvaltı', category: 'Kahvaltı', qty, unitPrice: unit, kdvRate: Number(root.querySelector('#bK').value) });
+        await api.post(`/api/folios/${st.folio.folio.id}/charge`, { description: 'Kahvaltı', category: 'Kahvaltı', qty, unitPrice: unit, kdvRate: 0 });
         await reload(); toast('Kahvaltı eklendi.', 'ok'); return true;
       },
     });
   }
   function addPayment() {
+    const cur = st.currency || (st.reservation && st.reservation.currency) || 'TRY';
+    const sym = cur === 'EUR' ? '€' : cur === 'USD' ? '$' : '₺';
+    const isFx = cur === 'EUR' || cur === 'USD';
+    const fxObj = cur === 'EUR' ? eur : (cur === 'USD' ? usd : null);
+    const fxRate = fxObj ? Number(fxObj.forexSelling) : null;
     guestlessForm({
       title: 'Tahsilat',
       fields: `<div class="field"><label>Ödeme Tipi</label><select class="select" id="pM">${Object.entries(PAY_METHODS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
-        <div class="field"><label>Tutar (₺)</label><input class="input" type="number" step="0.01" id="pA" min="0" value="${st.folio.balance > 0 ? st.folio.balance : ''}"></div>
+        <div class="field"><label>Tutar (${sym})</label><input class="input" type="number" step="0.01" id="pA" min="0" value="${st.folio.balance > 0 ? st.folio.balance : ''}">
+        ${isFx && fxRate && st.folio.balance > 0 ? `<div class="hint" style="margin-top:4px">TRY Karşılığı: <b>${money(st.folio.balance * fxRate)}</b> (Kur: ${money(fxRate)})</div>` : ''}</div>
         <div class="field"><label>Açıklama / Referans</label><input class="input" id="pR"></div>`,
       onOk: async (root) => {
         const amt = Number(root.querySelector('#pA').value); if (!amt) { toast('Tutar girin.', 'err'); return false; }
         await api.post(`/api/folios/${st.folio.folio.id}/payment`, { method: root.querySelector('#pM').value, amount: amt, reference: root.querySelector('#pR').value });
-        await reload(); toast('Tahsilat kaydedildi.', 'ok'); return true;
+        await reload(); ctx.reload && ctx.reload(); toast('Tahsilat kaydedildi.', 'ok'); return true;
       },
     });
   }
@@ -336,7 +372,7 @@ export async function openStayModal(ctx, opts = {}) {
   }
   async function reversePayment(payId) {
     if (!(await confirmDialog({ title: 'Tahsilat Sil', message: 'Bu tahsilat ters kayıtla iptal edilecek.', confirmText: 'Sil', danger: true }))) return;
-    try { await api.post(`/api/folios/${st.folio.folio.id}/payment/${payId}/reverse`); await reload(); toast('Tahsilat iptal edildi.', 'ok'); } catch (e) { toast(e.message, 'err'); }
+    try { await api.post(`/api/folios/${st.folio.folio.id}/payment/${payId}/reverse`); await reload(); ctx.reload && ctx.reload(); toast('Tahsilat iptal edildi.', 'ok'); } catch (e) { toast(e.message, 'err'); }
   }
 
   // ---------- Alt bar aksiyonları ----------
@@ -364,13 +400,13 @@ export async function openStayModal(ctx, opts = {}) {
   }
   function printFolio() {
     const f = st.folio; const g = st.guests[0] || {};
-    const s = store; const set = {};
-    const rows = f.items.map((i) => `<tr><td>${fmtDateShort(i.date)}</td><td>${escapeHtml(i.description)}</td><td style="text-align:right">${money(i.gross)}</td></tr>`).join('');
-    const html = `<html><head><title>Folyo ${st.reservation.code}</title><style>body{font-family:Arial;padding:24px;color:#111}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{border-bottom:1px solid #ddd;padding:6px;font-size:13px;text-align:left}.tot{font-weight:bold}</style></head><body>
+    const cur = st.currency || (st.reservation && st.reservation.currency) || 'TRY';
+    const rows = f.items.map((i) => `<tr><td>${fmtDateShort(i.date)}</td><td>${escapeHtml(i.description)}</td><td style="text-align:right">${curFmt(i.gross, cur)}</td></tr>`).join('');
+    const html = `<html><head><title>Folyo ${escapeHtml(st.reservation.code)}</title><style>body{font-family:Arial;padding:24px;color:#111}h2{margin:0}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{border-bottom:1px solid #ddd;padding:6px;font-size:13px;text-align:left}.tot{font-weight:bold}</style></head><body>
       <h2>The Royal Luxury Hotel — Folyo</h2><div>${escapeHtml(st.reservation.code)} · Oda ${escapeHtml(st.room.number)} · ${escapeHtml(g.name || '')}</div>
       <div>${fmtDate(st.checkIn)} → ${fmtDate(st.checkOut)} · ${st.reservation.nights} gece</div>
       <table><thead><tr><th>Tarih</th><th>Açıklama</th><th style="text-align:right">Tutar</th></tr></thead><tbody>${rows}</tbody></table>
-      <table><tr class="tot"><td>Toplam</td><td style="text-align:right">${money(f.chargeTotal)}</td></tr><tr><td>Ödenen</td><td style="text-align:right">${money(f.paidTotal)}</td></tr><tr class="tot"><td>Bakiye</td><td style="text-align:right">${money(f.balance)}</td></tr></table>
+      <table><tr class="tot"><td>Toplam</td><td style="text-align:right">${curFmt(f.chargeTotal, cur)}</td></tr><tr><td>Ödenen</td><td style="text-align:right">${curFmt(f.paidTotal, cur)}</td></tr><tr class="tot"><td>Bakiye</td><td style="text-align:right">${curFmt(f.balance, cur)}</td></tr></table>
       </body></html>`;
     const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); w.focus(); w.print(); }
   }
@@ -382,6 +418,9 @@ export async function openStayModal(ctx, opts = {}) {
       const withName = st.guests.filter((g) => (g.firstName || g.name || '').trim());
       if (!withName.length) { toast('En az bir misafir ekleyin.', 'err'); st.tab = 'guest'; render(); return; }
       try {
+        if (st.checkOut !== st.reservation.checkOut || st.notes !== (st.reservation.notes || '')) {
+          await api.put(`/api/reservations/${st.reservationId}`, { checkOut: st.checkOut, notes: st.notes });
+        }
         const out = await api.post(`/api/reservations/${st.reservationId}/checkin`, { roomId: st.room.id, guests: st.guests });
         toast('Giriş tamamlandı.', 'ok');
         ctx.reload(); ctx.refreshBadges();
@@ -400,18 +439,31 @@ export async function openStayModal(ctx, opts = {}) {
         });
         toast('Giriş tamamlandı.', 'ok');
         ctx.reload();
-        // Düzenleme moduna geç (folio/ödeme için)
         st.mode = 'edit'; st.reservationId = out.reservation.id; st.tab = 'pay';
         await loadState(); render();
       } catch (e) { toast(e.message, 'err'); }
       return;
     }
-    // edit: çıkış istenmişse checkout — bakiye varsa ENGELLE
+    // edit modu: çıkış tarihi veya not değiştiyse önce rezervasyonu güncelle
+    if (st.reservation && (st.checkOut !== st.reservation.checkOut || st.notes !== (st.reservation.notes || ''))) {
+      try {
+        st.reservation = await api.put(`/api/reservations/${st.reservationId}`, { checkOut: st.checkOut, notes: st.notes });
+        st.folio = await api.get(`/api/reservations/${st.reservationId}/folio`);
+      } catch (e) { toast(e.message, 'err'); return; }
+    }
+    // edit: çıkış istenmişse checkout — çıkış tarihi işlem günü olmalı ve bakiye 0 olmalı
     if (st.checkout) {
+      if (st.checkOut !== bizDate) {
+        toast(`Çıkış yapılabilmesi için çıkış tarihi işlem günü (${fmtDate(bizDate)}) olmalıdır. Önce çıkış tarihini işlem gününe çekin.`, 'err');
+        st.checkout = false; st.tab = 'guest'; render();
+        const coEl = m.body.querySelector('#fCheckOut');
+        if (coEl) coEl.focus();
+        return;
+      }
       try {
         const res = await api.post(`/api/reservations/${st.reservationId}/checkout`, {});
         if (res && res.needsSettlement) {
-          toast(`${money(res.balance)} ödenmemiş bakiye var — çıkış yapılamaz. Önce tahsil edin.`, 'err');
+          toast(`${curFmt(res.balance, st.currency)} ödenmemiş bakiye var — çıkış yapılamaz. Önce tahsil edin.`, 'err');
           st.checkout = false; st.tab = 'pay';
           st.folio = await api.get(`/api/reservations/${st.reservationId}/folio`);
           render();
@@ -430,7 +482,7 @@ function openGuestForm(existing, onSave) {
     <div class="form-row"><div class="field"><label>Adı</label><input class="input" id="gF" value="${escapeHtml(g.firstName || '')}"></div>
       <div class="field"><label>Soyadı</label><input class="input" id="gL" value="${escapeHtml(g.lastName || '')}"></div></div>
     <div class="form-row"><div class="field"><label>Kimlik Türü</label><select class="select" id="gIT"><option value="tc" ${g.idType !== 'passport' ? 'selected' : ''}>T.C. Kimlik</option><option value="passport" ${g.idType === 'passport' ? 'selected' : ''}>Pasaport</option></select></div>
-      <div class="field"><label>Kimlik / Pasaport No</label><input class="input" id="gN" value="${escapeHtml(g.idNumber || '')}" autocomplete="off"></div></div>
+      <div class="field"><label>Kimlik / Pasaport No</label><input class="input" id="gN" value="${escapeHtml(g.idNumber || '')}" inputmode="numeric" autocomplete="off"><div id="gNErr" style="color:var(--danger);font-size:.75rem;margin-top:4px;display:none">TC kimlik numarası hatalı</div></div></div>
     <div id="gSuggest" class="guest-suggest"></div>
     <div class="form-row"><div class="field"><label>Doğum Tarihi</label><input class="input" type="date" id="gB" value="${escapeHtml(g.birthDate || '')}"></div>
       <div class="field"><label>Doğum Yeri</label><input class="input" id="gBP" value="${escapeHtml(g.birthPlace || '')}"></div></div>
@@ -446,12 +498,34 @@ function openGuestForm(existing, onSave) {
   // TCKN ile kayıtlı misafir arama + otomatik doldurma (Adonis tarzı)
   let pickedId = existing && existing.id ? existing.id : null;
   let lastMatches = [];
-  const gN = m.el.querySelector('#gN'), gF = m.el.querySelector('#gF'), gL = m.el.querySelector('#gL'), sug = m.el.querySelector('#gSuggest');
+  const gN = m.el.querySelector('#gN'), gIT = m.el.querySelector('#gIT'), gNErr = m.el.querySelector('#gNErr'), gF = m.el.querySelector('#gF'), gL = m.el.querySelector('#gL'), sug = m.el.querySelector('#gSuggest');
+  const setTcError = (show) => {
+    if (gNErr) gNErr.style.display = show ? 'block' : 'none';
+    if (gN) gN.style.borderColor = show ? 'var(--danger)' : '';
+  };
+  const checkTcField = (strict = false) => {
+    if (!gIT || gIT.value !== 'tc') { setTcError(false); return true; }
+    const val = gN.value.trim();
+    if (!val) { if (strict) setTcError(true); else setTcError(false); return !strict; }
+    if (strict || val.length >= 11 || /[^0-9]/.test(val) || val.startsWith('0')) {
+      const ok = isValidTCKN(val);
+      setTcError(!ok);
+      return ok;
+    }
+    setTcError(false);
+    return false;
+  };
+  gN.addEventListener('input', () => checkTcField(false));
+  gN.addEventListener('blur', () => { if (gN.value.trim()) checkTcField(true); });
+  gIT.addEventListener('change', () => {
+    gN.setAttribute('inputmode', gIT.value === 'tc' ? 'numeric' : 'text');
+    checkTcField(false);
+  });
   let deb;
   async function doSearch(q) {
     if (q.trim().length < 3) { sug.innerHTML = ''; return; }
     try {
-      lastMatches = await api.guests(q.trim()); // isim/TCKN/telefon arar, TÜMÜ döner
+      lastMatches = await api.guests(q.trim());
       sug.innerHTML = lastMatches.length
         ? `<div class="gs-head">Kayıtlı misafir (${lastMatches.length}) — tıklayınca doldurulur:</div>` + lastMatches.map((x) => `<button type="button" class="gs-item" data-gid="${x.id}"><b>${escapeHtml(x.name || '')}</b><span>TC ${escapeHtml(x.idNumber || '—')} · ${escapeHtml(x.phone || '')} · ${escapeHtml(x.nationality || '')}</span></button>`).join('')
         : '<div class="gs-head">Kayıt bulunamadı — yeni misafir olarak eklenecek.</div>';
@@ -477,11 +551,19 @@ function openGuestForm(existing, onSave) {
     m.el.querySelector('#gV').checked = !!x.vip;
     pickedId = x.id;
     sug.innerHTML = '<div class="gs-picked">✓ Kayıtlı misafir dolduruldu</div>';
+    setTcError(false);
   });
 
   foot.querySelector('#gSave').addEventListener('click', () => {
     const fn = m.el.querySelector('#gF').value.trim(); const ln = m.el.querySelector('#gL').value.trim();
     if (!fn) { toast('Ad zorunlu.', 'err'); return; }
+    const idType = m.el.querySelector('#gIT').value;
+    const idNumber = m.el.querySelector('#gN').value.trim();
+    if (idType === 'tc' && !isValidTCKN(idNumber)) {
+      setTcError(true);
+      gN.focus();
+      return;
+    }
     onSave({
       id: pickedId || undefined,
       firstName: fn, lastName: ln, name: `${fn} ${ln}`.trim(),
